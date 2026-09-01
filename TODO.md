@@ -2,10 +2,23 @@
 
 ## Open
 
-- [ ] Local incremental cache behind `olive-mail` ([tasks/Caching.md](tasks/Caching.md))
-- [ ] macOS Keychain for the app password (so we can test and develop there; the pass file is the Linux path)
-- [ ] `auth` should add or update an account, not overwrite `config.toml`
+- [ ] macOS support
+	- [ ] so we can test and develop on macOS; the pass file is the Linux path
+- [ ] encrypt password and isolate it from agents where the user has root access or can manage unix users (like on a personal macOS machine)
+	- [ ] Keychain for the app password on macOS
+	- [ ] systemd-creds on Linux
+- [ ] multiple accounts/addresses
+	- [ ] `auth` should add or update an account, not overwrite `config.toml`
+- [ ] Distribute as homebrew formula
+- [ ] Include agent skill
 - [ ] Granular permissions on this CLI: folders, senders, dates; read vs draft vs send; metadata first, body only when asked
+- [ ] Local incremental cache behind `olive-mail` ([tasks/Caching.md](tasks/Caching.md))
+- [ ] Self-hosted secret? What would it take?
+- [ ] Grok Bot Connector? What would it take?
+- [ ] RAG, search, summarization?
+- [ ] Redaction / anonymization layer?
+- [ ] At what point should we make it a compiled binary with an actual language (like Rust or Swift)?
+- [ ] OAuth for Gmail/Outlook accounts? What would it take?
 
 ## Done
 
