@@ -1,0 +1,7 @@
+.DS_Store
+.obsidian/
+
+# Secrets and generated Himalaya config belong in ~/.config/olive-mail/, never here.
+*.pass
+config.toml
+himalaya.toml
