@@ -1,8 +1,10 @@
 <div align="center">
-  <img src="olive-mail-logo.jpg" alt="Olive Mail" width="280">
+  <img src="logo/logo_invert_icon_gradient.svg" alt="Olive Mail" width="200">
 </div>
 
-Your actual email as context for agents – with you in control of permissions and credentials.
+# Olive Mail
+
+**Your actual email as context for agents – with you in control of permissions and credentials.**
 
 Existing mail accounts hold crucial context. But typical agents never see it – they are either thrown out of the mailboxes that hold the real work – or they get the keys to the whole kingdom.
 
