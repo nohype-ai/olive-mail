@@ -1,7 +1,7 @@
 <div align="center">
   <img src="logo/logo_invert_icon_gradient.svg" alt="Olive Mail" width="200">
-  <p style='font-size:42'>Olive Mail</p>
-  <p style='font-size:21'><b>Real Email Context for Agents</b><br>You control authentication, permissions & redactions.</p>
+  <h1>Olive Mail</h1>
+  <p><b>Real Email Context for Agents</b><br>You control authentication, permissions & redactions.</p>
 </div>
 
 ---
