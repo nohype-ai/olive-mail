@@ -3,7 +3,7 @@
     <source media="(prefers-color-scheme: dark)" srcset="logo/logo_invert_icon_gradient_titled.png">
     <img src="logo/logo_invert_icon_gradient_titled_dark.png" alt="Olive Mail" width="200">
   </picture>
-<p><b>Real Email Context for Agents</b><br>You control authentication, permissions & redactions.</p>
+<h3><b>Real Email Context for Agents</b><br>You control authentication, permissions & redactions.</h3>
 </div>
 
 ---
