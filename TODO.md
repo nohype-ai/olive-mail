@@ -2,9 +2,7 @@
 
 ## Open
 
-- [ ] encrypt password and isolate it from agents where the user has root access or can manage unix users (like on a personal macOS machine)
-	- [ ] Keychain for the app password on macOS
-	- [ ] systemd-creds on Linux
+- [ ] Daemon-user install: extra Unix user + daemon, fallback to today’s pass file ([tasks/Daemon-user.md](tasks/Daemon-user.md))
 - [ ] multiple accounts/addresses
 	- [ ] `auth` should add or update an account, not overwrite `config.toml`
 - [ ] Distribute as homebrew formula
