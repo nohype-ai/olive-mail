@@ -2,8 +2,6 @@
 
 ## Open
 
-- [ ] macOS support
-	- [ ] so we can test and develop on macOS; the pass file is the Linux path
 - [ ] encrypt password and isolate it from agents where the user has root access or can manage unix users (like on a personal macOS machine)
 	- [ ] Keychain for the app password on macOS
 	- [ ] systemd-creds on Linux
@@ -26,3 +24,4 @@
 - [x] Grok-bot PATH (user-bin symlink, not the repo directory)
 - [x] Apache 2.0
 - [x] Public README
+- [x] macOS support (same ~/.config/olive-mail paths as Linux; Keychain is separate)

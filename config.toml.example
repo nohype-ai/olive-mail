@@ -9,6 +9,7 @@ mailbox.alias.inbox = "INBOX"
 
 imap.server = "imaps://imap.example.com:993"
 imap.sasl.plain.username = "you@example.com"
-imap.sasl.plain.passwd.command = ["cat", "/home/USER/.config/olive-mail/you@example.com.pass"]
+# Absolute path; `olive-mail auth` writes the real ~/.config/olive-mail/<email>.pass
+imap.sasl.plain.passwd.command = ["/bin/cat", "/path/to/.config/olive-mail/you@example.com.pass"]
 
 # No smtp block: bots must not send.

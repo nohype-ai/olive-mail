@@ -28,7 +28,7 @@ Checklist: [TODO.md](TODO.md).
 
 ## Install
 
-Clone this repo and run it once from the checkout (Linux today; Homebrew on macOS should work the same):
+Clone this repo and run it once from the checkout (Linux and macOS):
 
 ```sh
 ./olive-mail auth you@example.com
@@ -38,7 +38,7 @@ That run will:
 
 1. Install [Homebrew](https://brew.sh) and [Himalaya](https://github.com/pimalaya/himalaya) if they are missing (needs network; no sudo).
 2. Symlink `olive-mail` to `~/.local/bin/` and, if writable, `/usr/local/bin/`. It does **not** add the repo to `PATH`.
-3. Append a `~/.local/bin` snippet to `~/.profile` / `~/.bashrc` / `~/.zshrc` if needed.
+3. Append a `~/.local/bin` snippet to existing shell rc files, and to `~/.zprofile` (macOS) or `~/.profile` (Linux) if needed.
 4. Prompt for the IMAP URL (e.g. `imaps://imap.example.com:993`) and the app password. Writes `~/.config/olive-mail/config.toml` and `~/.config/olive-mail/<email>.pass` (mode `0600`).
 
 Non-interactive:

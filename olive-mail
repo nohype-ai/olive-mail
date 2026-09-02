@@ -33,8 +33,16 @@ script_self() {
   echo "$(cd -P "$(dirname "$src")" && pwd)/$(basename "$src")"
 }
 
+# Login rc we always update (create if missing). Darwin zsh reads .zprofile, not .profile.
+login_rc() {
+  case "$(uname -s)" in
+    Darwin) echo "$HOME/.zprofile" ;;
+    *) echo "$HOME/.profile" ;;
+  esac
+}
+
 ensure_local_bin_in_path_files() {
-  local snippet f
+  local snippet f login
   snippet='
 # olive-mail: user bin
 if [ -d "$HOME/.local/bin" ]; then
@@ -43,19 +51,16 @@ if [ -d "$HOME/.local/bin" ]; then
     *) export PATH="$HOME/.local/bin:$PATH" ;;
   esac
 fi'
-  local wrote=0
-  for f in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc"; do
-    [[ -f "$f" ]] || continue
-    if grep -q 'olive-mail: user bin' "$f"; then
-      wrote=1
+  login=$(login_rc)
+  for f in "$login" "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bashrc" "$HOME/.zprofile" "$HOME/.zshrc"; do
+    if [[ "$f" != "$login" && ! -f "$f" ]]; then
+      continue
+    fi
+    if [[ -f "$f" ]] && grep -q 'olive-mail: user bin' "$f"; then
       continue
     fi
     printf '%s\n' "$snippet" >> "$f"
-    wrote=1
   done
-  if [[ "$wrote" -eq 0 ]]; then
-    printf '%s\n' "$snippet" >> "$HOME/.profile"
-  fi
 }
 
 # Symlink into ~/.local/bin (and /usr/local/bin if writable). Never add the repo to PATH.
@@ -213,7 +218,7 @@ mailbox.alias.inbox = "INBOX"
 
 imap.server = "${imap_server}"
 imap.sasl.plain.username = "${email}"
-imap.sasl.plain.passwd.command = ["cat", "${pass_file}"]
+imap.sasl.plain.passwd.command = ["/bin/cat", "${pass_file}"]
 
 # No smtp block: bots must not send.
 EOF
