@@ -160,10 +160,17 @@ CLI analogue (this task; no GUI):
 ```
 olive-mail permit alice use
 olive-mail permit alice deny
-olive-mail policy          # show matrix (see below)
+olive-mail permit --file matrix.toml   # whole matrix, one apply
+olive-mail policy                      # show matrix (see below)
 ```
 
-`permit` does not connect as admin. It `exec`s `sudo` / `polkit` / macOS authorization (Touch ID). The OS prompts. The helper runs as the olive-mail uid, reads the new policy on **stdin** (or argv that is the uid + verbs, not a file path the agent chose), writes `/var/lib/olive-mail/…`, exits. Daemon reloads (signal, inotify, or next request).
+The human may take as long as they want to **prepare** a file (or a GUI draft). That file lives in the agent uid; agents can mess with a draft. That is fine: it is not live.
+
+**Apply** is one command, **one** OS prompt, and can push the whole prepared matrix. `permit alice use` is the small form; `--file` is the batch form.
+
+`permit` does not connect as admin. The client **reads the payload first** (argv, or the file into memory / an already-open fd), then `exec`s `sudo` / `polkit` / macOS authorization (Touch ID). The OS prompts. The helper runs as the olive-mail uid, reads that **payload on stdin** (not a path it opens itself — agents must not get a TOCTOU swap on `/tmp/matrix.toml` after auth), writes `/var/lib/olive-mail/…`, exits. Daemon reloads (signal, inotify, or next request).
+
+**Every `permit` authenticates.** No unlock-and-keep, no `auth_admin_keep`, no leftover sudo timestamp. After the helper, `sudo -k` (or polkit `auth_admin`, not `auth_admin_keep`). Touch ID per apply is the intended UX: serious, simple, good enough. A future GUI uses the same rule (no Settings-style Unlock for a session of edits).
 
 Until that helper succeeds, the live matrix is unchanged. Agents can run `olive-mail permit` all day; they fail the OS prompt (unless passwordless sudo — already fallback).
 
@@ -256,7 +263,8 @@ Client detects “no socket / not installed as daemon” and runs the local fall
 - `olive-mail install` — probe, then hard split or fallback. One sudo on the hard path. Records the installing uid as the first matrix row (`use`, no send). Idempotent. Prints which mode it chose and the disclaimer if fallback.
 - `olive-mail auth` — writes the password **into whichever store is active** (daemon dir vs `~/.config`). Must not leave a readable copy on the agent uid after a successful hard install. Auth is not the admin path; it still needs a human factor so agents cannot rotate the secret (interactive prompt / sudo as appropriate).
 - `olive-mail …` (mail) — if the socket is up, client only, matrix applied by **peer uid**. Else fallback wrapper.
-- `olive-mail permit <user> use|deny` — OS prompt, helper as olive-mail uid, stdin/argv payload, no public socket.
+- `olive-mail permit <user> use|deny` — one OS prompt, helper as olive-mail uid, stdin/argv payload, no public socket.
+- `olive-mail permit --file <path>` — client reads the file first, then the same one-shot apply (full matrix).
 - `olive-mail policy` — show matrix (sudo helper and/or read-only report).
 - `olive-mail status` — mode, uid, socket, whether `sudo -n` would succeed now. For humans; not for agents to “fix.”
 
@@ -303,6 +311,7 @@ Uninstall (optional v1): stop service, remove socket; do not delete the extra us
 - [ ] Tiny binary/entry: runs as olive-mail uid via sudo/polkit/Touch ID, not setuid-mail.
 - [ ] Payload on stdin (or fixed argv: uid + verb). Never `apply /tmp/policy`.
 - [ ] Writes `policy`, exits. No long-lived admin session.
+- [ ] Per-`permit` OS prompt: polkit `auth_admin` (not `_keep`); `sudo -k` after; macOS prompt every apply.
 - [ ] GUI-free. This *is* the management API for v1.
 
 ### 7. Fallback install / `auth`
@@ -355,7 +364,7 @@ Uninstall (optional v1): stop service, remove socket; do not delete the extra us
 | Permit on the mail socket / admin session in agent uid | Mail API rejects those; helper is the only writer |
 | GUI or client password field | None. OS prompt only |
 | `sudo apply /tmp/policy` TOCTOU | Helper reads stdin/argv, writes the real path itself |
-| Sudo timestamp after a human `permit` | Acceptable short window, or `sudo -k` after helper; still better than a standing GUI session |
+| Sudo/polkit “keep” after a human `permit` | Not used. Per-apply auth; `sudo -k` / `auth_admin`; Touch ID every time |
 | World socket, other humans on the box | Default deny + log; only installing uid has `use` until `permit` |
 | Himalaya still `cat`s a file the agent can see | File not in agent home |
 | Fallback users think they got the hard split | Loud disclaimer; `status` shows mode |
