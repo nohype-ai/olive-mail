@@ -3,8 +3,12 @@
 Hide the IMAP password from the Unix user that agents run as, by splitting olive-mail across two uids. Agents keep calling `olive-mail`. They never handle the credential. The process that *has* the password is the one that enforces policy.
 
 Status: todo  
-Date: 2026-09-02  
-Depends on: live IMAP already working via `olive-mail auth`  
+Date: 2026-09-03  
+Depends on:
+
+- live IMAP already working via `olive-mail auth`
+- **compiled olive-mail (Swift) as a separate task, done first** — this file is not that rewrite. The extra uid is what hides the secret; a real language is what makes the daemon a program we can trust to implement it. Do not start this install/daemon work in bash.
+
 Platforms: Linux and macOS (same feature, native service manager on each)
 
 This is the privilege split the README already names as required to actually hide the secret. It is a local, same-machine split. Not Keychain, not systemd-creds, not a remote vault, not a Grok Bot connector.
@@ -23,15 +27,15 @@ Unix access control is by **user**, not by **program**.
 
 The OS-correct local answer: **someone who is not the agent can create a uid the agent cannot assume.** That uid runs olive-mail. The agent uid only runs a client.
 
-Compilation is irrelevant to this feature. A bash (or later Rust) daemon as the other uid is the same gate. Rewriting the language is a separate TODO.
+The daemon is a small **server** (long-lived, many sessions, a wire protocol, it is the TCB). That is why the language rewrite comes first. Compilation still does not hide the password.
 
 ## Goal
 
-- Two uids on the box: **agent user** (the human, and every agent) and **olive-mail user** (hidden, no login).
-- Agent-facing `olive-mail` is a thin client: connect to the counterpart, print the result. It never sees the password.
-- The counterpart (daemon) **is** olive-mail: credential, IMAP/Himalaya, send gate, future permissions, future cache/search. Anything that could bypass the gate lives there.
-- One **hard** ceiling per machine (what the daemon allows that agent uid). Not per-agent isolation — all agents are the same uid.
-- If a hard split cannot be installed, **detect that, disclaim it, and still install** with today’s `~/.config/olive-mail/<email>.pass` (`0600`). Fallback is first-class. Honest agents still do not handle the password through the CLI, and the send gate still runs; a malicious same-uid agent can still read the file.
+- Two uids: **agent user** (the human *and* every agent — there is no third “human only” uid) and **olive-mail user** (hidden, no login). The olive-mail **program** runs entirely as that second uid. Agent-facing `olive-mail` is only a thin client (connect, print).
+- IPC is a **Unix socket**, never TCP localhost / MCP / HTTP / XPC.
+- Hard gate is a **permission matrix per Unix user** (peer uid the kernel attests). Default: installing uid may use mail under the ceiling (no send); everyone else can connect and is denied (logged).
+- Matrix **edits** never go over the agent-facing socket. A CLI admin path hops to the olive-mail uid via OS authentication (sudo / polkit / Touch ID). No password, no standing admin session, in any agent-uid process.
+- If a hard split cannot be installed, **detect that, disclaim it, and still install** with today’s `~/.config/olive-mail/<email>.pass` (`0600`). Fallback is first-class.
 
 ## Current
 
@@ -46,34 +50,47 @@ agent uid  →  olive-mail (bash)  →  himalaya -c ~/.config/olive-mail/config.
 
 ```
 agent uid
-    │  olive-mail …     (thin client, no secret)
+    │  olive-mail …          thin client, mail ops only
     ▼
-unix socket
+unix socket (world-connectable; identity = peer uid)
     │
-olive-mail uid (hidden daemon)
-    │  password + IMAP config + policy + Himalaya (+ later cache)
+olive-mail uid (daemon = the whole program)
+    │  password + IMAP config + matrix + Himalaya (+ later cache)
     ▼
 IMAP
+
+agent uid
+    │  olive-mail permit …   does NOT use that socket
+    ▼
+OS prompt (sudo / polkit / Touch ID)
+    ▼
+short helper as olive-mail uid → writes matrix → exits
 ```
 
-Setup is one interactive `sudo` on a capable machine (`olive-mail install` or an `auth` path that offers install). After that, agents do not sudo.
+Setup is one interactive `sudo` on a capable machine (`olive-mail install`). After that, agents do not sudo. Humans sudo again only to change the matrix (or re-install).
 
 ## How the client talks to the daemon
 
-A **Unix domain socket**. That is the normal local client ↔ daemon pattern when they are different uids on the same machine (Docker, `gpg-agent`, cups, local MySQL, …).
+A **Unix domain socket**. Normal local client ↔ daemon when they are different uids (Docker, `gpg-agent`, cups, local MySQL).
 
-The daemon owns the socket file (e.g. `/var/run/olive-mail/olive-mail.sock`). The thin client connects, sends the command (Himalaya-shaped argv is fine), relays stdout/stderr/exit. Who may connect is file mode + group — the same DAC as any other file, which is the point of the extra user.
+The path (e.g. `/var/run/olive-mail/olive-mail.sock`) is only the doorbell. Each `connect`/`accept` is its own session (own fd, own peer uid). Many clients in parallel is the normal case. The daemon must not mix their traffic; serialize work that isn’t safe to overlap (e.g. one Himalaya if that’s the constraint).
 
-systemd and launchd both know how to create that socket and hand it to the daemon at start (socket activation). Use that rather than the daemon binding the path itself if the service manager makes it easy.
+**Who connected:** `SO_PEERCRED` (Linux) / `LOCAL_PEERCRED` (macOS). The kernel attests uid. That is the matrix key. No token.
+
+**Who may connect:** the socket is **world-connectable** (`666`). The directory is **not** world-writable (`/var/run/olive-mail/` `755`, owned by the daemon or root) so nobody can replace the socket and MITM. Authorization is the matrix inside olive-mail, not a socket group.
+
+systemd / launchd socket activation if it is easy; otherwise the daemon binds the path.
 
 Not:
 
-- **TCP localhost** — any local process can hit it unless we add a second auth layer. Useless extra surface for a same-machine split.
+- **TCP localhost** — does *not* undo the extra-user split (password still in the other uid). It does drop filesystem DAC and kernel peer-uid, so you’d invent tokens and you can bind `0.0.0.0` by mistake. Out. Unix socket gives peer uid for free.
 - **Named pipe / FIFO** — poor fit for request/response and multiple clients.
-- **setuid-per-call** — the other classic Unix style; we already picked a long-lived daemon.
-- **macOS XPC only** — Apple’s native privilege-helper IPC. A Unix socket still works on Darwin and is the **one** mechanism for Linux + macOS. Do not take an XPC-only path.
+- **setuid-per-call** — the other classic Unix style; we picked a daemon.
+- **XPC** — macOS-only. Out. Unix socket on Darwin too.
 
-Protocol v1: no HTTP, no D-Bus. Connect, send argv, read the result, close. Framing can be as small as “length-prefixed blobs” or a line-oriented request; pick whatever is boring to implement in the current language.
+Protocol v1: no HTTP, no D-Bus, no MCP. Connect, send argv, read the result, close. MCP, if ever, is a later **client** of this socket, not the privileged API.
+
+The agent-facing socket speaks **mail operations only**. It does not speak permit / policy-write / unlock / admin. A client that sends those is rejected.
 
 ## Hard split vs fallback
 
@@ -93,31 +110,66 @@ Probe the machine. Do not guess from “user is an admin” — a personal Mac a
 
 On fallback, print a clear disclaimer: the secret is **not** hidden from a malicious same-uid agent; the CLI still keeps honest agents off the raw password and still applies the send gate. Then continue. Do not fail the install.
 
-Same agent-facing commands in both modes.
+Same agent-facing mail commands in both modes. `permit` only exists in hard-split mode (there is no olive-mail uid to hop to).
 
 ## Where the logic lives
 
-The gate lives with the secret. A thin privileged “here is Himalaya, go nuts” helper is today’s bypass (`message send` through the helper).
+The gate lives with the secret. A thin privileged “here is Himalaya, go nuts” helper is today’s bypass.
 
-Put the **whole product** on the olive-mail uid:
+Put the **whole product** on the olive-mail uid (the TCB: code that can leak the password or skip the gate):
 
 - hold the credential
-- IMAP config that could affect where the password is sent (an agent rewriting `~/.config` to a hostile IMAP host is otherwise a leak)
-- Himalaya (implementation detail inside that uid; agents never invoke it)
-- send gate and later folder/date/body permissions
-- later: canonical cache and search, because already-downloaded mail is still under policy
+- IMAP config (an agent rewriting a user-level config to a hostile IMAP host would steal AUTH)
+- Himalaya only inside this uid
+- permission matrix + send gate
+- later: canonical cache and search
 
-The agent-user command is only the connection: argv → socket → stdout/stderr/exit. Agents may write their own client; the daemon API **is** the gate.
+Keep that process **small**. No GUI toolkit in the daemon. No HTML. A GUI, if ever, is a separate agent-uid viewer; this task has no GUI.
 
-Keep the daemon boring where possible, but do not leave policy or mail-at-rest on the agent uid “to shrink TCB” if that data is still permissioned.
+The agent-uid binary is only the connection for mail, and the **launcher** for admin (it triggers OS auth; it does not become admin).
 
-## Per-agent passwords
+## Permission matrix (hard gate)
 
-Optional later, as **labels for honest agents** (this intern may only search). Not a hard gate.
+Identity = **Unix uid** of the connecting process. All agents as that user share one row. That is the only hard isolation the OS will enforce.
 
-All agents share the agent uid, so any of them can steal another’s token (file, env, memory) and impersonate it. Do not advertise per-agent secrets as isolation.
+v1 matrix:
 
-Hard enforcement is one ceiling for the box. Until there is a token scheme, that ceiling is the same for every caller on the socket.
+- rows: Unix users
+- columns: at least `use` (list/read/search) vs `send` (always off in v1)
+- default: **installing uid** may `use`, not `send`. Every other uid: deny, **log** (uid, time, command).
+- stored only under `/var/lib/olive-mail/` (`700` / files `600`, olive-mail uid)
+
+Later granular rules (folders, dates, metadata vs body) are a separate TODO; they land in this same matrix, still keyed by uid.
+
+**Agent IDs** (cooperative labels, “this intern only searches”): out of scope. Same uid can steal another’s id. Nice later for monitoring honest agents, not a gate, not this task.
+
+## Admin path (CLI, not the agent socket)
+
+There is no third human uid. The human *is* the agent uid at the keyboard. So “GUI/CLI as the agent user can edit policy after a password” is a hole: the secret or an admin session sits in a process the agents are.
+
+**Do not:**
+
+- put permit / unlock / matrix-write on the world socket
+- collect the mailbox password, sudo password, or a standing admin ticket in an agent-uid process
+- write a temp policy file then `sudo apply /tmp/...` (agents can swap the file)
+
+**Do:** matrix files are only writable by the olive-mail uid. The human reaches that uid the same way as `install`: OS authentication, then a **short-lived helper as `_olivemail` / `olivemail`**.
+
+CLI analogue (this task; no GUI):
+
+```
+olive-mail permit alice use
+olive-mail permit alice deny
+olive-mail policy          # show matrix (see below)
+```
+
+`permit` does not connect as admin. It `exec`s `sudo` / `polkit` / macOS authorization (Touch ID). The OS prompts. The helper runs as the olive-mail uid, reads the new policy on **stdin** (or argv that is the uid + verbs, not a file path the agent chose), writes `/var/lib/olive-mail/…`, exits. Daemon reloads (signal, inotify, or next request).
+
+Until that helper succeeds, the live matrix is unchanged. Agents can run `olive-mail permit` all day; they fail the OS prompt (unless passwordless sudo — already fallback).
+
+`policy` show: either the helper (sudo) reads the file, or the daemon may **read**-report the caller’s own row (and the owner’s full matrix) on the mail socket. Writes never go that way.
+
+A future GUI would be the same principle: agent-uid viewer, Commit = this helper. Not in this task.
 
 ## Scenarios
 
@@ -150,34 +202,38 @@ On Grok Bot–like boxes the real next level is “secret not on this VM” (con
 - macOS Keychain, systemd-creds, kernel keyrings, TPM / Secure Enclave
 - Remote vault, hosted connector, Grok Bot connector, “self-hosted secret” as a network service
 - Sandboxing or launching agents
-- Per-agent hard isolation on a shared uid
-- Requiring a compiled language
-- Changing the agent-facing command name or Himalaya argv shape
+- Per-agent hard isolation; agent IDs / cooperative labels
+- The Swift/compiled rewrite itself (precondition, separate TODO)
+- GUI (viewer or editor). Admin is CLI + OS prompt. Daemon stays without a GUI.
+- Admin / unlock / permit on the agent-facing socket; standing admin sessions in the agent uid
+- Using the IMAP password as an admin factor
+- TCP localhost, D-Bus, MCP-as-privileged-API, or XPC
+- setuid/setgid helper as the *mail* path (the admin hop is sudo/polkit, one shot, not a setuid mail daemon)
+- Changing the agent-facing mail command name or Himalaya argv shape
 - Enabling send
-- Implementing the cache ([tasks/Caching.md](Caching.md)) or granular permission *rules* (separate TODOs) — this task only **places** them on the daemon uid when they exist
-- GUI user setup (System Settings). Daemon users are CLI-only and hidden.
-- TCP localhost, D-Bus, or an XPC-only macOS helper; IPC is a Unix socket on both platforms
-- setuid/setgid helper instead of a daemon
+- Implementing the cache ([tasks/Caching.md](Caching.md)) or granular permission *rules* (separate TODOs) — this task **places** a per-uid matrix and the admin hop; richer columns come later
+- Creating users via System Settings. Daemon users are CLI-only and hidden.
 
 ## Layout (machine, not git)
 
 ### Hard split
 
 ```
-# agent uid — no secret
-olive-mail                         # thin client on PATH (unchanged name)
-~/.config/olive-mail/client.toml   # optional: socket path only, if not the default
+# agent uid — no secret, no policy file
+olive-mail                         # thin client + admin launcher on PATH
+~/.config/olive-mail/client.toml   # optional: socket path only
 
-# olive-mail uid
-/var/lib/olive-mail/               # home / state, mode 700, uid olive-mail
-  config.toml                      # Himalaya + policy; not the agent’s ~/.config
-  <email>.pass                     # mode 0600, uid olive-mail
-/var/run/olive-mail/olive-mail.sock
+# olive-mail uid — whole program
+/var/lib/olive-mail/               # 700, uid olive-mail
+  config.toml                      # Himalaya; not the agent’s ~/.config
+  <email>.pass                     # 0600, uid olive-mail
+  policy                           # matrix, 0600, uid olive-mail
+/var/run/olive-mail/               # 755, daemon or root; NOT world-writable
+  olive-mail.sock                  # 666, world-connectable
+
 Linux:  systemd system unit (not systemd --user)
 macOS:  LaunchDaemon /Library/LaunchDaemons/…
 ```
-
-Unix socket: daemon uid owns it; the **installing** user (and thus their agents) can connect; other human logins on a shared box should not. Do not use `staff` on macOS (every local user). A dedicated group, installing uid added, mode `660`, is the default.
 
 Hidden user:
 
@@ -193,14 +249,16 @@ Today’s layout, unchanged:
 ~/.config/olive-mail/<email>.pass    # 0600, agent uid
 ```
 
-Client detects “no socket / not installed as daemon” and execs Himalaya locally as now.
+Client detects “no socket / not installed as daemon” and runs the local fallback (send gate in-process). No `permit`.
 
 ## Commands
 
-- `olive-mail install` — probe, then hard split or fallback. One sudo on the hard path. Idempotent. Prints which mode it chose and the disclaimer if fallback.
-- `olive-mail auth` — writes the password **into whichever store is active** (daemon dir vs `~/.config`). Must not leave a readable copy on the agent uid after a successful hard install.
-- `olive-mail …` — if the socket is up, client only; else fallback wrapper (including `deny_send` in-process).
-- `olive-mail status` (or `install --status`) — mode, uid, socket, whether `sudo -n` would succeed now. For humans and for docs; not for agents to “fix.”
+- `olive-mail install` — probe, then hard split or fallback. One sudo on the hard path. Records the installing uid as the first matrix row (`use`, no send). Idempotent. Prints which mode it chose and the disclaimer if fallback.
+- `olive-mail auth` — writes the password **into whichever store is active** (daemon dir vs `~/.config`). Must not leave a readable copy on the agent uid after a successful hard install. Auth is not the admin path; it still needs a human factor so agents cannot rotate the secret (interactive prompt / sudo as appropriate).
+- `olive-mail …` (mail) — if the socket is up, client only, matrix applied by **peer uid**. Else fallback wrapper.
+- `olive-mail permit <user> use|deny` — OS prompt, helper as olive-mail uid, stdin/argv payload, no public socket.
+- `olive-mail policy` — show matrix (sudo helper and/or read-only report).
+- `olive-mail status` — mode, uid, socket, whether `sudo -n` would succeed now. For humans; not for agents to “fix.”
 
 Uninstall (optional v1): stop service, remove socket; do not delete the extra user without an explicit flag.
 
@@ -209,82 +267,99 @@ Uninstall (optional v1): stop service, remove socket; do not delete the extra us
 ### 1. Probe
 
 - [ ] `sudo -k; sudo -n true` — passwordless sudo.
-- [ ] Can we create a user and a system service? (try, or check `id` + writable `/Library/LaunchDaemons` / systemd system dir.)
+- [ ] Can we create a user and a system service?
 - [ ] Daily uid is root? → fallback.
 - [ ] Decide mode; print it. Never claim “secret hidden” on fallback.
 
 ### 2. Linux hard install
 
 - [ ] `useradd` system user `olivemail`, nologin, home `/var/lib/olive-mail`.
-- [ ] Group for socket access; add the installing user.
-- [ ] systemd **system** unit, `User=olivemail`, socket or `RuntimeDirectory=`.
-- [ ] State dir `0700`. Password file `0600` that uid only.
+- [ ] systemd **system** unit, `User=olivemail`, `RuntimeDirectory=` `755`.
+- [ ] Socket `666` in that dir. State dir `0700`. Pass + policy `0600`.
+- [ ] Matrix: installing uid `use`, not `send`.
 
 ### 3. macOS hard install
 
-- [ ] Same, via `sysadminctl` and/or `dscl`: hidden `_olivemail`, UID &lt; 500, no shell.
+- [ ] Hidden `_olivemail`, UID &lt; 500, no shell (`sysadminctl` / `dscl`).
 - [ ] LaunchDaemon plist in `/Library/LaunchDaemons/`, `UserName`, `launchctl bootstrap system`.
-- [ ] All terminal. No System Settings.
+- [ ] Same socket/state/matrix rules. All terminal. No System Settings.
 
-### 4. Daemon
+### 4. Daemon (olive-mail uid — the program)
 
-- [ ] Runs as the olive-mail uid. Reads only *its* config and pass files.
-- [ ] Speaks a narrow command API over the socket (Himalaya-shaped argv is fine). Applies `deny_send` **here**. Does not expose “print the password” or a raw shell.
-- [ ] Invokes Himalaya (or IMAP) only inside this uid. Agents never call `himalaya` as part of the supported path.
-- [ ] IMAP host/credentials live only here so the agent cannot redirect AUTH to a hostile server.
+- [ ] Reads only *its* config, pass, policy.
+- [ ] Accept many sessions. Identity = peer uid. Apply matrix. Log denies.
+- [ ] Mail API only (Himalaya-shaped argv is fine). `deny_send` here. Reject permit/unlock/admin. Never print the password.
+- [ ] Himalaya / IMAP only inside this uid. IMAP host + credentials only here.
+- [ ] Reload policy after helper write.
 
-### 5. Thin client
+### 5. Thin client (agent uid)
 
-- [ ] Same `olive-mail` on PATH. If socket present and connectable, send argv, relay stdio/exit. Else fallback path (today’s script).
-- [ ] No pass file on the agent uid in hard mode. `auth` after install must not write one there (or must remove it).
+- [ ] Same `olive-mail` on PATH. Mail subcommands: socket if present, else fallback.
+- [ ] `permit` / `policy` write: do **not** use the mail socket; invoke the OS-auth helper.
+- [ ] No pass file on the agent uid in hard mode.
 
-### 6. Fallback install / `auth`
+### 6. Admin helper
+
+- [ ] Tiny binary/entry: runs as olive-mail uid via sudo/polkit/Touch ID, not setuid-mail.
+- [ ] Payload on stdin (or fixed argv: uid + verb). Never `apply /tmp/policy`.
+- [ ] Writes `policy`, exits. No long-lived admin session.
+- [ ] GUI-free. This *is* the management API for v1.
+
+### 7. Fallback install / `auth`
 
 - [ ] No extra user. Write `~/.config/olive-mail/<email>.pass` as today.
-- [ ] Disclaimer on stderr (and once in `status`): not hidden from a malicious same-uid agent; CLI + send gate still apply for normal use.
-- [ ] Existing `./olive-mail auth` on a box that never ran `install` stays this mode (backward compatible).
+- [ ] Disclaimer on stderr (and `status`).
+- [ ] Existing `./olive-mail auth` without `install` stays this mode.
 
-### 7. Docs in this repo
+### 8. Docs in this repo
 
-- [ ] README: privilege split when install can; fallback when not; scenarios in short. Remove “theoretically a shell can always read the file” as the only story — say when that is still true.
-- [ ] Layout section: both modes.
+- [ ] README: privilege split when install can; fallback when not; per-uid matrix; `permit` uses OS auth. When a same-uid agent can still read the file (fallback).
+- [ ] Layout: both modes.
 - [ ] TODO.md: this task checked off when done. Keychain / systemd-creds stay gone.
-- [ ] `olive-mail install --help` names the probe and both outcomes.
+- [ ] `olive-mail install --help` / `permit --help` name the probe, both outcomes, and that permit is not the mail socket.
 
-### 8. Interaction with other TODOs (do not implement here)
+### 9. Interaction with other TODOs (do not implement here)
 
-- [ ] Caching.md: Maildir must eventually live under the olive-mail uid, not `$XDG_DATA_HOME` of the agent. Note in Caching.md when this ships, or a one-line pointer from that file.
-- [ ] Granular permissions: rules engine in the daemon; still one ceiling per machine unless/until cooperative agent labels exist.
+- [ ] Caching.md: Maildir under the olive-mail uid, not agent `$XDG_DATA_HOME`.
+- [ ] Granular permissions: more matrix columns in the daemon; still keyed by uid.
+- [ ] Agent IDs / GUI viewer: later, same admin helper on Commit.
 
 ## Order
 
-1. Probe + disclaimer (can ship before the daemon; `status` useful immediately)
-2. Thin client + fallback path (today’s behavior, explicit mode)
-3. Linux daemon + user + systemd
-4. macOS daemon + user + LaunchDaemon
-5. `auth` writes to the active store; drop agent-uid `.pass` on hard install
-6. README
+1. Language rewrite (separate task) — blocked until then
+2. Probe + disclaimer
+3. Thin client + fallback path
+4. Linux daemon + user + systemd + matrix
+5. macOS daemon + user + LaunchDaemon
+6. Admin helper (`permit`)
+7. `auth` writes to the active store; drop agent-uid `.pass` on hard install
+8. README
 
 ## Done when
 
-- On a personal Linux or macOS box with interactive sudo: extra user exists, socket works, `.pass` is **not** readable by the agent uid, `olive-mail envelope list` still works, `message send` is still rejected **by the daemon**.
-- `cat` of any agent-uid olive-mail file does not yield the IMAP password.
-- Direct `himalaya` as the agent uid cannot AUTH (no pass file, no Keychain, no helper that prints the secret).
-- On a box with `NOPASSWD` sudo or no admin: install chooses fallback, prints the disclaimer, and today’s path still works.
-- Same feature on Linux and macOS.
-- No Keychain, no systemd-creds, no remote secret path in this work.
+- On a personal Linux or macOS box with interactive sudo: extra user exists, world socket works, `.pass` is **not** readable by the agent uid, `olive-mail envelope list` works for the installing uid, a second Unix user is denied and logged, `message send` is rejected **by the daemon**.
+- `olive-mail permit` triggers an OS auth prompt; without it the matrix does not change; a successful permit as the helper uid does.
+- No admin/unlock on the mail socket. No password prompt in the agent-uid client except OS sudo/polkit/Touch ID.
+- Direct `himalaya` as the agent uid cannot AUTH.
+- On a box with `NOPASSWD` sudo or no admin: fallback + disclaimer; today’s path still works.
+- Same feature on Linux and macOS. No GUI. No Keychain, systemd-creds, TCP, or remote secret path.
 
 ## Risks
 
 | Risk | Mitigation |
 |---|---|
-| Passwordless sudo / docker-group / already-root makes split fake | Probe `sudo -k; sudo -n true`; refuse to *claim* isolation; fallback |
+| Passwordless sudo / docker-group / already-root makes split fake | Probe `sudo -k; sudo -n true`; fallback; never claim isolation |
 | Cached sudo timestamp during `install` looks like NOPASSWD | Always `sudo -k` before `-n` |
 | Agent rewrites IMAP host and steals AUTH | Config + password only on olive-mail uid |
-| Socket world-connectable on a shared Mac (`staff`) | Dedicated group; only installing uid |
-| setuid helper instead of daemon | Don’t; LaunchDaemon/systemd. Smaller, long-lived TCB, no setuid |
-| Himalaya still `cat`s a file the agent can see | File not in agent home; `passwd.command` only in daemon config |
+| Agent replaces the socket | Dir `755` not world-writable |
+| Permit on the mail socket / admin session in agent uid | Mail API rejects those; helper is the only writer |
+| GUI or client password field | None. OS prompt only |
+| `sudo apply /tmp/policy` TOCTOU | Helper reads stdin/argv, writes the real path itself |
+| Sudo timestamp after a human `permit` | Acceptable short window, or `sudo -k` after helper; still better than a standing GUI session |
+| World socket, other humans on the box | Default deny + log; only installing uid has `use` until `permit` |
+| Himalaya still `cat`s a file the agent can see | File not in agent home |
 | Fallback users think they got the hard split | Loud disclaimer; `status` shows mode |
-| Caching.md puts Maildir in agent XDG | Pointer when this lands; cache follows the daemon |
-| Company IT never runs `useradd` | Admin/package path in docs; workstation `install` is not that path |
-| macOS GUI-only intuition | Document CLI-only hidden user; never send people to System Settings |
+| Caching.md puts Maildir in agent XDG | Pointer when this lands |
+| Company IT never runs `useradd` | Admin/package path in docs |
+| macOS GUI-only intuition for *users* | CLI-only hidden user; never System Settings |
+| Implementing this in bash | Blocked on the Swift task |

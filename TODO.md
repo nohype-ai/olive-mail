@@ -2,6 +2,7 @@
 
 ## Open
 
+- [ ] Compiled olive-mail (Swift) — precondition for daemon-user; not specified in that task
 - [ ] Daemon-user install: extra Unix user + daemon, fallback to today’s pass file ([tasks/Daemon-user.md](tasks/Daemon-user.md))
 - [ ] multiple accounts/addresses
 	- [ ] `auth` should add or update an account, not overwrite `config.toml`
@@ -13,7 +14,6 @@
 - [ ] Grok Bot Connector? What would it take?
 - [ ] RAG, search, summarization?
 - [ ] Redaction / anonymization layer?
-- [ ] At what point should we make it a compiled binary with an actual language (like Rust or Swift)?
 - [ ] OAuth for Gmail/Outlook accounts? What would it take?
 
 ## Done
