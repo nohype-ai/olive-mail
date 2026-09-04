@@ -29,6 +29,8 @@ The OS-correct local answer: **someone who is not the agent can create a uid the
 
 The daemon is a small **server** (long-lived, many sessions, a wire protocol, it is the TCB). That is why the language rewrite comes first. Compilation still does not hide the password.
 
+> Side note for clarity: Even though a shared human/agent uid might have admin rights, any action that actually requires admin rights (adding another user account, running something as another user) actually triggers an authentication request by the OS (Touch ID / passssword), **if** passwordless sudo is not available. That's why this works. Agents can trigger the request but not complete it (they obviously must not have the user's password).
+
 ## Goal
 
 - Two uids: **agent user** (the human *and* every agent — there is no third “human only” uid) and **olive-mail user** (hidden, no login). The olive-mail **program** runs entirely as that second uid. Agent-facing `olive-mail` is only a thin client (connect, print).
