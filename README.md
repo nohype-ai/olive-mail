@@ -8,11 +8,11 @@
 
 ---
 
-Existing mail accounts hold crucial context. But typical agents never see it – they are either thrown out of the mailboxes that hold the real work – or they get the keys to the whole kingdom.
+Existing mail accounts hold crucial and sensitive context for real work. But typical agents either see none of it or can do all with it – locked into their own little mailbox or holding the keys to your kingdom.
 
-`olive-mail` is the grown-up path in between: a local mediator that you authenticate. Agents don't handle mailbox credentials – they call `olive-mail` to search and read, so they are in the loop on all things for all their work.
+**Olive Mail** is the grown-up solution: a local mediator that you authenticate. Agents never touch your email password. They search, read, draft or send only as far as you permitted.
 
-Agents act as interns, not as a spokesperson for you or your company. They can't send or even draft if you don't want them to. They're still in the know, and you're still the one who speaks.
+Agents don't _have_ to act as spokesperson for you or your company. You can employ them like interns. They can be in the loop on all things for all their work, while you're still the one who speaks.
 
 ## Status
 
