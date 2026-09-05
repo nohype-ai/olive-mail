@@ -2,6 +2,25 @@ import ArgumentParser
 import Foundation
 
 struct Email: AsyncParsableCommand {
+    struct Summary: Codable, Equatable, Sendable {
+        var mailbox: String
+        var id: String
+        var from: String
+        var to: String
+        var date: String?
+        var subject: String
+    }
+
+    struct View: Codable, Equatable, Sendable {
+        var mailbox: String
+        var id: String
+        var from: String
+        var to: String
+        var date: String
+        var subject: String
+        var body: String
+    }
+
     static let configuration = CommandConfiguration(
         abstract: "Emails.",
         subcommands: [List.self, Show.self]
@@ -97,7 +116,7 @@ struct Email: AsyncParsableCommand {
             }
         }
 
-        private func jsonObject(_ view: EmailView, fields: [Field]) -> [String: String] {
+        private func jsonObject(_ view: View, fields: [Field]) -> [String: String] {
             var object: [String: String] = [
                 "mailbox": view.mailbox,
                 "id": view.id,
@@ -114,7 +133,7 @@ struct Email: AsyncParsableCommand {
             return object
         }
 
-        private func human(_ view: EmailView, fields: [Field]) -> String {
+        private func human(_ view: View, fields: [Field]) -> String {
             fields.map { field in
                 switch field {
                 case .from: "From: \(view.from)"
@@ -126,4 +145,19 @@ struct Email: AsyncParsableCommand {
             }.joined(separator: "\n")
         }
     }
+}
+
+func newestEmails(_ emails: [Email.Summary], limit: Int) -> [Email.Summary] {
+    let formatter = ISO8601DateFormatter()
+    func key(_ email: Email.Summary) -> Date {
+        email.date.flatMap { formatter.date(from: $0) } ?? .distantPast
+    }
+    return Array(emails.sorted { key($0) > key($1) }.prefix(max(limit, 0)))
+}
+
+func formatAddress(_ name: String?, email: String) -> String {
+    if let name, !name.isEmpty {
+        return "\(name) <\(email)>"
+    }
+    return email
 }

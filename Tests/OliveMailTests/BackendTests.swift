@@ -9,9 +9,9 @@ import SystemPackage
 
 @Test func newestEmailsCutsAndSorts() {
     let emails = [
-        EmailSummary(mailbox: "INBOX", id: "1", from: "a", to: "b", date: "2026-01-01T00:00:00Z", subject: "old"),
-        EmailSummary(mailbox: "Sent", id: "2", from: "a", to: "b", date: "2026-06-01T00:00:00Z", subject: "new"),
-        EmailSummary(mailbox: "INBOX", id: "3", from: "a", to: "b", date: "2026-03-01T00:00:00Z", subject: "mid"),
+        Email.Summary(mailbox: "INBOX", id: "1", from: "a", to: "b", date: "2026-01-01T00:00:00Z", subject: "old"),
+        Email.Summary(mailbox: "Sent", id: "2", from: "a", to: "b", date: "2026-06-01T00:00:00Z", subject: "new"),
+        Email.Summary(mailbox: "INBOX", id: "3", from: "a", to: "b", date: "2026-03-01T00:00:00Z", subject: "mid"),
     ]
     let top = newestEmails(emails, limit: 2)
     #expect(top.map(\.id) == ["2", "3"])

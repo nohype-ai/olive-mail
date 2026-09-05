@@ -2,6 +2,11 @@ import ArgumentParser
 import Foundation
 
 struct Mailbox: AsyncParsableCommand {
+    struct Info: Codable, Equatable, Sendable {
+        var id: String
+        var name: String
+    }
+
     static let configuration = CommandConfiguration(
         abstract: "Mailboxes.",
         subcommands: [List.self]
