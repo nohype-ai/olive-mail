@@ -49,11 +49,11 @@ agent  →  olive-mail (Swift, ArgumentParser)
               └─ later: Maildir / MailKit / …
 ```
 
-Permission checks (not this task) sit between the command and `MailBackend`, keyed by **our** command names and typed args (`list`, `show`, `show`+`body`, mailbox, …).
+Permission checks (not this task) sit between the command and `MailBackend`, keyed by **our** command names and typed args (`list`, `show`, mailbox, fields, …). Partial read rights **redact** denied fields on `show`; they do not change the command.
 
 ## Agent-facing API (MVP)
 
-Hierarchy: account → mailbox → email → fields. Unix shape: account is `-a`, mailbox is a folder, `list` is `ls`, `show` is `cat`.
+Hierarchy: account → mailbox → email. Unix shape: account is `-a`, mailbox is a folder, `list` is `ls`, `show` is `cat`.
 
 Account: `-a you@example.com` on the root. Omitted = the `default = true` account in `config.toml`.
 
@@ -74,18 +74,18 @@ olive-mail search MyProjectMailbox from alice@client.com after 2026-01-01
 olive-mail show MyInbox 42
 olive-mail show MyProjectMailbox 108
 olive-mail show MyInbox 42 from
-olive-mail show MyInbox 42 from to subject
-olive-mail show MyProjectMailbox 108 body
-olive-mail show MyProjectMailbox 108 from date body
 ```
 
 Semantics:
 
-| Command | Returns | Body |
-|---|---|---|
-| `mailbox list` | mailbox names | — |
-| `list` / `search` | many emails, metadata only (`id`, `from`, `to`, `date`, `subject`) | never |
-| `show <mailbox> <id>` | exactly one email; default = headers | only if `body` is asked |
+| Command | Returns |
+|---|---|
+| `mailbox list` | mailbox names |
+| `list` / `search` | many emails (`id`, `from`, `to`, `date`, `subject`) |
+| `show <mailbox> <id>` | that email |
+| `show <mailbox> <id> from` | only that field (optional; same for `to`, `subject`, `date`, `body`) |
+
+`show` means show the email. Partial read rights (later) redact denied parts of that same command; they do not invent a headers-only verb.
 
 `list` and `search` require a mailbox (no implicit “current folder”). `search` is `list` plus query; do **not** expose Himalaya’s search DSL. MVP query: `from <addr>` and `after <YYYY-MM-DD>` as above (extend later).
 
@@ -146,7 +146,7 @@ Himalaya remains a **runtime** dependency of `HimalayaBackend` (brew install on 
 
 - [ ] Root `OliveMail`: `commandName` `olive-mail`, `-a/--account`, `--json`, subcommands below. Empty `olive-mail` / `--help` is our help, not Himalaya’s, not “Hello, world!”.
 - [ ] `auth`, `mailbox list`, `list`, `search`, `show` as `AsyncParsableCommand`s. Parse tests for the examples in this file (including rejection of unknown verbs and of `show 42` without a mailbox).
-- [ ] `show`: positional mailbox, positional id, remaining field names (`from`, `to`, `subject`, `date`, `body`). Unknown field = error.
+- [ ] `show`: positional mailbox, positional id, optional field names (`from`, `to`, `subject`, `date`, `body`). Unknown field = error.
 - [ ] Replace the hello-world test.
 
 ### 2. Paths, auth, Himalaya install
@@ -163,7 +163,7 @@ Himalaya remains a **runtime** dependency of `HimalayaBackend` (brew install on 
 - [ ] `HimalayaBackend`: one process invoke helper (use swift-system; preserve stdout/stderr/exit). Always `-c` our config. `--json` for parseable output.
 - [ ] Map `mailbox list` → Himalaya mailbox list. Surface **IMAP mailbox ids** (e.g. `INBOX`, `MyProjectMailbox`), not Himalaya aliases only. Keep using `mailbox.alias.inbox` in config when the host’s inbox is not `INBOX`.
 - [ ] Map `list` / `show` / `search` onto Himalaya envelope/message calls **with** `-m/--mailbox` and Himalaya’s per-mailbox id. Our location id **is** that Himalaya/IMAP id for MVP.
-- [ ] `show` without `body`: headers only (do not fetch/print the body). `body` in the field list is the only path that reads content.
+- [ ] `show`: fetch and print that email. Optional field names just narrow the output. Permissions (later) redact; they do not change the command.
 - [ ] Search: translate `from` / `after` into whatever Himalaya search we call. If Himalaya’s DSL is the only option, keep that string **inside** the backend; the CLI stays `from` / `after`.
 
 ### 4. Retire bash
@@ -185,8 +185,8 @@ Himalaya remains a **runtime** dependency of `HimalayaBackend` (brew install on 
 1. Skeleton + parse tests (help is ours)
 2. Paths + `auth` + Himalaya/PATH bootstrap
 3. `mailbox list` live
-4. `list` + `show` (headers) live
-5. `show … body` + `search`
+4. `list` + `show` live
+5. `search`
 6. Delete bash product path
 7. README
 
@@ -194,7 +194,7 @@ Himalaya remains a **runtime** dependency of `HimalayaBackend` (brew install on 
 
 - `olive-mail --help` lists `auth`, `mailbox`, `list`, `search`, `show` and does not mention Himalaya subcommands.
 - `olive-mail auth` writes the same config/pass layout as today.
-- `mailbox list`, `list MyInbox`, `show MyInbox 42`, `show MyInbox 42 body`, and a `search` work against a real account via Himalaya.
+- `mailbox list`, `list MyInbox`, `show MyInbox 42`, and a `search` work against a real account via Himalaya.
 - `olive-mail envelope list` / `olive-mail message send` fail as **unknown commands**.
 - Binary on `PATH` is Swift; bash wrapper is gone.
 - Tests cover parsing and at least a fake `MailBackend` for `list`/`show` (no live IMAP required in CI).
@@ -210,7 +210,7 @@ Himalaya remains a **runtime** dependency of `HimalayaBackend` (brew install on 
 | `auth` overwrites `config.toml` | Leave as today; multiple-accounts TODO |
 | Help vs `show … --help` | `--help` is ours everywhere; field name `help` is not a field |
 | Himalaya missing / old brew build | `ensure_himalaya`; fail with install text, do not silent-passthrough |
-| Body accidentally included in `list` / default `show` | Tests on the mapper: summaries have no body; default fields exclude `body` |
+| Body leaking via `list` / `search` | Summaries never include `body`; only `show` does (then redaction, later) |
 | [Caching.md](Caching.md) still says unchanged argv | Update that file’s command names when this lands, before cache work |
 
 ## Out of scope until this works
