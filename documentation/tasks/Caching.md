@@ -1,16 +1,18 @@
 # Task: local mail cache behind `olive-mail`
 
-`olive-mail` is still a Himalaya wrapper. Today every `envelope list` / `message read` hits IMAP. Put an incremental Maildir under the wrapper so those same commands are local. Sync is a timer (and a CLI subcommand), not a model.
+`olive-mail` is a Swift CLI; Himalaya is the v1 backend. Today every `email list` / `email show` hits IMAP. Put an incremental Maildir under the backend so those same commands are local. Sync is a timer (and a CLI subcommand), not a model.
+
+Agent argv is `mailbox list` / `email list` / `email show`, not Himalaya `envelope` / `message`. This cache is the same commands, faster. See [Swift-migration.md](Swift-migration.md).
 
 Status: todo  
 Date: 2026-09-01  
-Depends on: live IMAP already working via `olive-mail auth` + `olive-mail envelope list`
+Depends on: live IMAP already working via `olive-mail account add` + `olive-mail email list`
 
 This is a product feature of this CLI, not a one-off on the Grok Bot VM. The first dogfood mailbox is `hi@nohype.ai` (IONOS) on that VM — see the company `BOT/Email Setup.md` — but nothing in this repo is mailbox-specific. The repo is already decoupled from any real account.
 
 ## Goal
 
-- Incremental on-disk copy of Inbox + Sent + Drafts for whatever account `auth` configured.
+- Incremental on-disk copy of Inbox + Sent + Drafts for whatever account `account add` configured.
 - Agents keep calling `olive-mail`. Never `himalaya`, `mbsync`, or `notmuch`.
 - Himalaya reads the Maildir (offline). IMAP is only for sync.
 - Fetch/index costs zero tokens.
@@ -23,7 +25,7 @@ olive-mail …  →  himalaya -c ~/.config/olive-mail/config.toml …
                   imap.server + passwd.command = cat <email>.pass
 ```
 
-Fine for a peek. Slow, live, and not a corpus. `auth` writes a single IMAP account and overwrites `config.toml` (open TODO). Send is already gated in `olive-mail` (no SMTP; `message send` / `smtp` / `--send` rejected).
+Fine for a peek. Slow, live, and not a corpus. `account add` writes a single IMAP account and overwrites `config.toml` (open TODO). Send is absent from the Swift CLI.
 
 ## Target
 
@@ -35,14 +37,14 @@ $XDG_DATA_HOME/olive-mail/<email>/     Maildir (not git)
     │
     └─ himalaya  maildir.root = that path
            ▲
-olive-mail mailbox|envelope|message …  (unchanged argv)
+olive-mail mailbox list | email list | email show  (same agent argv, local)
 ```
 
 Timer every 10 min: `olive-mail sync`. The wrapper may also sync on a read if `.last-sync` is older than 20 min — the agent does not decide. `flock` so timer and on-demand do not overlap.
 
 ## Non-goals
 
-- Changing the agent-facing command (`olive-mail`, Himalaya argv)
+- Changing the agent-facing command (`mailbox list` / `email list` / `email show`)
 - MCP / plugins / public URL
 - Markdown dump of the mailbox
 - Enabling send (`MAIL_SEND` stays off; humans send from the real client)
@@ -74,7 +76,7 @@ Folders: discover once with `olive-mail mailbox list`. IMAP default is `INBOX`; 
 ### 1. Baseline (this CLI, live IMAP)
 
 - [ ] Document the generated `config.toml` shape (`imap.server`, `imap.sasl.plain.passwd.command`, `mailbox.alias.inbox`). Copy aside before changing it.
-- [ ] Confirm `olive-mail mailbox list`, `envelope list`, `envelope search`, `message read` still work.
+- [ ] Confirm `olive-mail mailbox list`, `email list`, `email show` still work.
 
 ### 2. `olive-mail sync` (mbsync)
 
@@ -89,7 +91,7 @@ Folders: discover once with `olive-mail mailbox list`. IMAP default is `INBOX`; 
 
 - [ ] After a successful sync, set `maildir.root` on the account. Keep the `imap.*` block (sync + one-week fallback). Homebrew Himalaya speaks `maildir.root` (not a notmuch backend — that was removed in Himalaya v2).
 - [ ] `olive-mail` exec to Himalaya stays `himalaya -c "$HIMALAYA_CONFIG"`. Prefer the maildir backend when `maildir.root` is set (`--backend maildir` if both backends are present).
-- [ ] `olive-mail mailbox list` / `envelope list` / `message read` work with IMAP unreachable.
+- [ ] `olive-mail mailbox list` / `email list` / `email show` work with IMAP unreachable.
 - [ ] `auth` currently overwrites `config.toml`. Either preserve `maildir.root` + aliases, or document that re-auth requires another `sync` to restore them. Do not invent a second config path.
 
 ### 4. Search
@@ -132,7 +134,7 @@ Folders: discover once with `olive-mail mailbox list`. IMAP default is `INBOX`; 
 ## Done when
 
 - Second `olive-mail sync` is incremental (seconds).
-- `olive-mail envelope search` / `message read` work with IMAP unreachable.
+- `olive-mail email list` / `email show` work with IMAP unreachable.
 - A bot answers a mail question via `olive-mail` with no live IMAP on the read path.
 - Timer has run unattended ≥ 1 hour.
 - Sync path never invokes a model.

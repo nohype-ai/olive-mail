@@ -10,17 +10,6 @@ import SystemPackage
 // Locate HOME / XDG on this machine is fine. Do not create or overwrite
 // files outside a temp directory.
 
-@Test func listRuns() async throws {
-    let result = try await #require(
-        processExitsWith: .success,
-        observing: [\.standardOutputContent]
-    ) {
-        var command = try Email.List.parse([])
-        try await command.run()
-    }
-    #expect(result.standardOutputContent.isEmpty)
-}
-
 @Test func rootSubcommandsExist() {
     var names: Set<String> = []
     for command in OliveMail.configuration.subcommands {

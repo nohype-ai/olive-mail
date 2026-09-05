@@ -1,6 +1,6 @@
-# Written by olive-mail auth to ~/.config/olive-mail/config.toml.
+# Written by olive-mail account add to ~/.config/olive-mail/config.toml.
 # No password in this file. passwd.command cats ~/.config/olive-mail/<email>.pass
-# If envelope list fails, set mailbox.alias.inbox to an id from: olive-mail mailbox list
+# If email list fails, set mailbox.alias.inbox to an id from: olive-mail mailbox list
 
 [accounts."you@example.com"]
 default = true
@@ -9,7 +9,7 @@ mailbox.alias.inbox = "INBOX"
 
 imap.server = "imaps://imap.example.com:993"
 imap.sasl.plain.username = "you@example.com"
-# Absolute path; `olive-mail auth` writes the real ~/.config/olive-mail/<email>.pass
+# Absolute path; `olive-mail account add` writes the real ~/.config/olive-mail/<email>.pass
 imap.sasl.plain.passwd.command = ["/bin/cat", "/path/to/.config/olive-mail/you@example.com.pass"]
 
 # No smtp block: bots must not send.

@@ -2,7 +2,7 @@
 
 Replace the bash Himalaya wrapper with a Swift CLI that owns the agent-facing API. Himalaya is the v1 backend, not the interface. This is the precondition [Daemon-user.md](Daemon-user.md) names; that file is not this rewrite.
 
-Status: todo  
+Status: done  
 Date: 2026-09-05  
 Depends on: live IMAP already working via bash `olive-mail auth`
 
@@ -170,38 +170,38 @@ Himalaya is a **runtime** dependency of `HimalayaBackend`. If `himalaya` is not 
 ### 1. CLI skeleton (no IMAP)
 
 - [x] Root `OliveMail` is a dispatcher: `account`, `mailbox`, `email`. Empty `olive-mail` / `--help` is our help, not Himalaya’s.
-- [ ] Leaves wired for MVP: `account add`, `mailbox list`, `email list`, `email show`. `--json` on mail leaves; `-m/--mailbox` on `email` leaves (`email list`: omitted = all; `email show`: required). `--limit` on `email list` (default 20). Comment out, do not delete: `account list`, `-a/--account`, list filters. Parse tests for the MVP examples (including rejection of `auth`, `email search`, `email show` without `-m` or without an id).
-- [ ] `email show`: required `-m/--mailbox`, positional id, optional field names (`from`, `to`, `subject`, `date`, `body`). Unknown field = error.
-- [ ] Replace the hello-world test.
+- [x] Leaves wired for MVP: `account add`, `mailbox list`, `email list`, `email show`. `--json` on mail leaves; `-m/--mailbox` on `email` leaves (`email list`: omitted = all; `email show`: required). `--limit` on `email list` (default 20). Comment out, do not delete: `account list`, `-a/--account`, list filters. Parse tests for the MVP examples (including rejection of `auth`, `email search`, `email show` without `-m` or without an id).
+- [x] `email show`: required `-m/--mailbox`, positional id, optional field names (`from`, `to`, `subject`, `date`, `body`). Unknown field = error.
+- [x] Replace the hello-world test.
 
 ### 2. Paths + `account add`
 
-- [ ] Port `set_paths` / bash `auth` into `account add`: `XDG_CONFIG_HOME` / `~/.config/olive-mail`, pass file `0600`, `config.toml` shape matching `config.toml.example` (no SMTP). Overwrite as today.
-- [ ] Mail commands: if `himalaya` is missing, fail with install text. If no config/pass: `Run: olive-mail account add`.
-- [ ] PATH bootstrap (`ensure_on_path`) and Homebrew auto-install (`ensure_himalaya`): omit from MVP; comment if ported, do not delete the idea.
+- [x] Port `set_paths` / bash `auth` into `account add`: `XDG_CONFIG_HOME` / `~/.config/olive-mail`, pass file `0600`, `config.toml` shape matching `config.toml.example` (no SMTP). Overwrite as today.
+- [x] Mail commands: if `himalaya` is missing, fail with install text. If no config/pass: `Run: olive-mail account add`.
+- [x] PATH bootstrap (`ensure_on_path`) and Homebrew auto-install (`ensure_himalaya`): omit from MVP; comment if ported, do not delete the idea.
 
 ### 3. `MailBackend` + HimalayaBackend
 
-- [ ] Protocol + types (`Mailbox`, `EmailSummary`, `EmailLocationID`, `EmailField`, `EmailFilter`, `EmailView`).
-- [ ] `HimalayaBackend`: one process invoke helper (use swift-system; preserve stdout/stderr/exit). Always `-c` our config. `--json` for parseable output.
-- [ ] Map `mailbox list` → Himalaya mailbox list. Surface **IMAP mailbox ids** (e.g. `INBOX`, `MyProjectMailbox`), not Himalaya aliases only. Keep using `mailbox.alias.inbox` in config when the host’s inbox is not `INBOX`.
-- [ ] Map `email list` / `email show` onto Himalaya envelope/message calls **with** `-m/--mailbox` and Himalaya’s per-mailbox id. Our location id **is** that Himalaya/IMAP UID for MVP.
-- [ ] `email show`: fetch and print that email (metadata + body). Optional field names just narrow the output. Permissions (later) redact; they do not change the command.
-- [ ] `email list`: per mailbox `envelope list -m … --page-size <limit> --page 1`; merge; sort newest first; cut to `--limit` (default 20). Filter translation stays commented with the CLI filters.
+- [x] Protocol + types (`Mailbox`, `EmailSummary`, `EmailLocationID`, `EmailField`, `EmailFilter`, `EmailView`).
+- [x] `HimalayaBackend`: one process invoke helper (use swift-system; preserve stdout/stderr/exit). Always `-c` our config. `--json` for parseable output.
+- [x] Map `mailbox list` → Himalaya mailbox list. Surface **IMAP mailbox ids** (e.g. `INBOX`, `MyProjectMailbox`), not Himalaya aliases only. Keep using `mailbox.alias.inbox` in config when the host’s inbox is not `INBOX`.
+- [x] Map `email list` / `email show` onto Himalaya envelope/message calls **with** `-m/--mailbox` and Himalaya’s per-mailbox id. Our location id **is** that Himalaya/IMAP UID for MVP.
+- [x] `email show`: fetch and print that email (metadata + body). Optional field names just narrow the output. Permissions (later) redact; they do not change the command.
+- [x] `email list`: per mailbox `envelope list -m … --page-size <limit> --page 1`; merge; sort newest first; cut to `--limit` (default 20). Filter translation stays commented with the CLI filters.
 
 ### 4. Retire bash
 
-- [ ] Root `./olive-mail` is no longer the product. Either delete it or make it a one-line exec of a release binary (do not keep a second implementation).
-- [ ] `swift build -c release` produces the binary. Document that.
-- [ ] No code path `exec himalaya "$@"` with agent argv.
+- [x] Root `./olive-mail` is no longer the product. Either delete it or make it a one-line exec of a release binary (do not keep a second implementation).
+- [x] `swift build -c release` produces the binary. Document that.
+- [x] No code path `exec himalaya "$@"` with agent argv.
 
 ### 5. Docs
 
-- [ ] README **Now**: Swift CLI, own read API, Himalaya backend. Drop “type `olive-mail` wherever Himalaya docs say `himalaya`”. Usage block = the MVP examples in this file. `auth` → `account add`.
-- [ ] README **Next** still granular permissions; mention daemon-user needs this binary.
-- [ ] `config.toml.example` only if the generated shape changes (should not).
-- [ ] [TODO.md](../TODO.md): this item checked off when done.
-- [ ] [Caching.md](Caching.md): note that agent argv is `mailbox list` / `email list` / `email show` / …, not `envelope` / `message`. Do not implement cache here.
+- [x] README **Now**: Swift CLI, own read API, Himalaya backend. Drop “type `olive-mail` wherever Himalaya docs say `himalaya`”. Usage block = the MVP examples in this file. `auth` → `account add`.
+- [x] README **Next** still granular permissions; mention daemon-user needs this binary.
+- [x] `config.toml.example` only if the generated shape changes (should not).
+- [x] [TODO.md](../TODO.md): this item checked off when done.
+- [x] [Caching.md](Caching.md): note that agent argv is `mailbox list` / `email list` / `email show` / …, not `envelope` / `message`. Do not implement cache here.
 
 ## Order
 

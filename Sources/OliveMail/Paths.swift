@@ -31,15 +31,15 @@ struct Paths: Equatable, Sendable {
         }
         return Paths(directory: configHome.appending("olive-mail"))
     }
-}
 
-enum OliveMailError: Error, Equatable, CustomStringConvertible {
-    case missingHome
-
-    var description: String {
-        switch self {
-        case .missingHome:
-            "olive-mail: HOME is not set"
+    func requireConfigured() throws {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: himalayaConfig.string) else {
+            throw OliveMailError.missingConfig(himalayaConfig)
+        }
+        let names = (try? fm.contentsOfDirectory(atPath: directory.string)) ?? []
+        guard names.contains(where: { $0.hasSuffix(".pass") }) else {
+            throw OliveMailError.missingPassword(directory)
         }
     }
 }
