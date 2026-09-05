@@ -7,7 +7,7 @@ Date: 2026-09-03
 Depends on:
 
 - live IMAP already working via `olive-mail auth`
-- **compiled olive-mail (Swift) as a separate task, done first** — this file is not that rewrite. The extra uid is what hides the secret; a real language is what makes the daemon a program we can trust to implement it. Do not start this install/daemon work in bash.
+- **compiled olive-mail (Swift) done first** ([Swift-migration.md](Swift-migration.md)) — this file is not that rewrite. The extra uid is what hides the secret; a real language is what makes the daemon a program we can trust to implement it. Do not start this install/daemon work in bash.
 
 Platforms: Linux and macOS (same feature, native service manager on each)
 

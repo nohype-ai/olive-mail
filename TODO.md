@@ -2,7 +2,7 @@
 
 ## Open
 
-- [ ] Compiled olive-mail (Swift) — precondition for daemon-user; not specified in that task
+- [ ] Compiled olive-mail (Swift): own read API, Himalaya as backend ([tasks/Swift-migration.md](tasks/Swift-migration.md))
 - [ ] Daemon-user install: extra Unix user + daemon, fallback to today’s pass file ([tasks/Daemon-user.md](tasks/Daemon-user.md))
 - [ ] multiple accounts/addresses
 	- [ ] `auth` should add or update an account, not overwrite `config.toml`
