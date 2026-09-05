@@ -5,6 +5,10 @@ import PackageDescription
 
 let package = Package(
     name: "OliveMail",
+    products: [
+        .executable(name: "olive-mail",
+                    targets: ["OliveMail"]),
+    ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser",
                  exact: "1.8.2"),
