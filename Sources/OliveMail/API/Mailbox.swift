@@ -20,7 +20,7 @@ struct Mailbox: AsyncParsableCommand {
         @OptionGroup var globals: Globals
 
         mutating func run() async throws {
-            let paths = try Paths.resolve()
+            let paths = try FilePaths.resolve()
             try paths.requireConfigured()
             let backend = HimalayaBackend(paths: paths)
             let mailboxes = try await backend.listMailboxes()

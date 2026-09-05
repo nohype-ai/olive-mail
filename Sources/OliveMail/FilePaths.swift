@@ -7,7 +7,7 @@ import SystemPackage
 
 /// `~/.config/olive-mail/` (or `$XDG_CONFIG_HOME/olive-mail/`).
 /// `config.toml` is Himalaya’s config; `<email>.pass` is ours.
-struct Paths: Equatable, Sendable {
+struct FilePaths: Equatable, Sendable {
     let directory: FilePath
 
     var himalayaConfig: FilePath {
@@ -20,7 +20,7 @@ struct Paths: Equatable, Sendable {
 
     static func resolve(
         environment: [String: String] = ProcessInfo.processInfo.environment
-    ) throws -> Paths {
+    ) throws -> FilePaths {
         let configHome: FilePath
         if let xdg = environment["XDG_CONFIG_HOME"], !xdg.isEmpty {
             configHome = FilePath(xdg)
@@ -29,7 +29,7 @@ struct Paths: Equatable, Sendable {
         } else {
             throw OliveMailError.missingHome
         }
-        return Paths(directory: configHome.appending("olive-mail"))
+        return FilePaths(directory: configHome.appending("olive-mail"))
     }
 
     func requireConfigured() throws {

@@ -88,14 +88,14 @@ func commandDoesNotExist(_ args: [String]) {
 }
 
 @Test func pathsFromHome() throws {
-    let paths = try Paths.resolve(environment: ["HOME": "/Users/you"])
+    let paths = try FilePaths.resolve(environment: ["HOME": "/Users/you"])
     #expect(paths.directory == FilePath("/Users/you/.config/olive-mail"))
     #expect(paths.himalayaConfig == FilePath("/Users/you/.config/olive-mail/config.toml"))
     #expect(paths.passFile(email: "you@example.com") == FilePath("/Users/you/.config/olive-mail/you@example.com.pass"))
 }
 
 @Test func pathsFromXDGConfigHome() throws {
-    let paths = try Paths.resolve(environment: [
+    let paths = try FilePaths.resolve(environment: [
         "HOME": "/Users/you",
         "XDG_CONFIG_HOME": "/tmp/xdg-config",
     ])
@@ -105,12 +105,12 @@ func commandDoesNotExist(_ args: [String]) {
 
 @Test func pathsNeedHome() {
     #expect(throws: OliveMailError.missingHome) {
-        try Paths.resolve(environment: [:])
+        try FilePaths.resolve(environment: [:])
     }
 }
 
 @Test func pathsResolveOnThisMachine() throws {
-    let paths = try Paths.resolve()
+    let paths = try FilePaths.resolve()
     #expect(paths.directory.lastComponent?.string == "olive-mail")
     #expect(paths.himalayaConfig == paths.directory.appending("config.toml"))
 }

@@ -6,11 +6,11 @@ import SystemPackage
 #endif
 
 struct HimalayaBackend: MailBackend {
-    let paths: Paths
+    let paths: FilePaths
     let invoke: @Sendable ([String]) async throws -> Data
 
     init(
-        paths: Paths,
+        paths: FilePaths,
         invoke: (@Sendable ([String]) async throws -> Data)? = nil
     ) {
         self.paths = paths

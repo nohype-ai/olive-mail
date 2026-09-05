@@ -6,7 +6,7 @@ import SystemPackage
 #endif
 
 enum AccountStore {
-    static func write(paths: Paths, email: String, imap: String, password: String) throws {
+    static func write(paths: FilePaths, email: String, imap: String, password: String) throws {
         let fm = FileManager.default
         try fm.createDirectory(
             at: URL(fileURLWithPath: paths.directory.string),

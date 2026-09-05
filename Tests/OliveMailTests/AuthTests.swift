@@ -13,7 +13,7 @@ import SystemPackage
     try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: tmp) }
 
-    let paths = Paths(directory: FilePath(tmp.path))
+    let paths = FilePaths(directory: FilePath(tmp.path))
     try AccountStore.write(
         paths: paths,
         email: "you@example.com",
@@ -47,7 +47,7 @@ import SystemPackage
     try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: tmp) }
 
-    let paths = Paths(directory: FilePath(tmp.path))
+    let paths = FilePaths(directory: FilePath(tmp.path))
     #expect(throws: OliveMailError.missingConfig(paths.himalayaConfig)) {
         try paths.requireConfigured()
     }

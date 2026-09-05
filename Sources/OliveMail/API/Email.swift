@@ -57,7 +57,7 @@ struct Email: AsyncParsableCommand {
         var limit: Int = 20
 
         mutating func run() async throws {
-            let paths = try Paths.resolve()
+            let paths = try FilePaths.resolve()
             try paths.requireConfigured()
             let backend = HimalayaBackend(paths: paths)
             let emails = try await backend.listEmails(
@@ -104,7 +104,7 @@ struct Email: AsyncParsableCommand {
         var fields: [Field] = []
 
         mutating func run() async throws {
-            let paths = try Paths.resolve()
+            let paths = try FilePaths.resolve()
             try paths.requireConfigured()
             let backend = HimalayaBackend(paths: paths)
             let view = try await backend.showEmail(mailbox: mailbox, id: id)

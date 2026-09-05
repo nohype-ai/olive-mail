@@ -2,7 +2,6 @@
 
 ## Open
 
-- [x] Compiled olive-mail (Swift): own read API, Himalaya as backend ([tasks/Swift-migration.md](tasks/Swift-migration.md))
 - [ ] Daemon-user install: extra Unix user + daemon, fallback to today’s pass file ([tasks/Daemon-user.md](tasks/Daemon-user.md))
 - [ ] multiple accounts/addresses
 	- [ ] `account add` should add or update an account, not overwrite `config.toml`
@@ -18,6 +17,7 @@
 
 ## Done
 
+- [x] Compiled olive-mail (Swift): own read API, Himalaya as backend ([tasks/done/Swift-migration.md](tasks/done/Swift-migration.md))
 - [x] Decouple the repo from any real mailbox
 - [x] Grok-bot PATH (user-bin symlink, not the repo directory)
 - [x] Apache 2.0

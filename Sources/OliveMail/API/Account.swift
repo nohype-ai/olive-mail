@@ -48,7 +48,7 @@ struct Account: AsyncParsableCommand {
             }
             if imap.isEmpty { throw OliveMailError.emptyImap }
 
-            let paths = try Paths.resolve()
+            let paths = try FilePaths.resolve()
             let password: String
             if tty {
                 let err = FileHandle.standardError

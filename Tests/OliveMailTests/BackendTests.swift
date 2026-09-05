@@ -18,7 +18,7 @@ import SystemPackage
 }
 
 @Test func himalayaBackendListsAndShows() async throws {
-    let paths = Paths(directory: FilePath("/tmp/olive-mail-test"))
+    let paths = FilePaths(directory: FilePath("/tmp/olive-mail-test"))
     let backend = HimalayaBackend(paths: paths) { args in
         switch args.first {
         case "mailbox":
@@ -62,7 +62,7 @@ import SystemPackage
 }
 
 @Test func unknownFolderIsEmptyList() async throws {
-    let paths = Paths(directory: FilePath("/tmp/olive-mail-test"))
+    let paths = FilePaths(directory: FilePath("/tmp/olive-mail-test"))
     let backend = HimalayaBackend(paths: paths) { _ in
         throw OliveMailError.himalayaFailed("IMAP SELECT failed: NO unknown folder")
     }
@@ -71,7 +71,7 @@ import SystemPackage
 }
 
 @Test func emptyMailboxIsEmptyList() async throws {
-    let paths = Paths(directory: FilePath("/tmp/olive-mail-test"))
+    let paths = FilePaths(directory: FilePath("/tmp/olive-mail-test"))
     let backend = HimalayaBackend(paths: paths) { _ in
         throw OliveMailError.himalayaFailed("cannot list imap envelopes: page 1 out of bounds")
     }
