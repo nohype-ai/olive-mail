@@ -1,6 +1,14 @@
 import Testing
 import ArgumentParser
+#if canImport(System)
+import System
+#else
+import SystemPackage
+#endif
 @testable import OliveMail
+
+// Locate HOME / XDG on this machine is fine. Do not create or overwrite
+// files outside a temp directory.
 
 @Test func listRuns() async throws {
     let result = try await #require(
@@ -88,4 +96,32 @@ func commandDoesNotExist(_ args: [String]) {
     #expect(throws: (any Error).self) {
         try OliveMail.parseAsRoot(args)
     }
+}
+
+@Test func pathsFromHome() throws {
+    let paths = try Paths.resolve(environment: ["HOME": "/Users/you"])
+    #expect(paths.directory == FilePath("/Users/you/.config/olive-mail"))
+    #expect(paths.himalayaConfig == FilePath("/Users/you/.config/olive-mail/config.toml"))
+    #expect(paths.passFile(email: "you@example.com") == FilePath("/Users/you/.config/olive-mail/you@example.com.pass"))
+}
+
+@Test func pathsFromXDGConfigHome() throws {
+    let paths = try Paths.resolve(environment: [
+        "HOME": "/Users/you",
+        "XDG_CONFIG_HOME": "/tmp/xdg-config",
+    ])
+    #expect(paths.directory == FilePath("/tmp/xdg-config/olive-mail"))
+    #expect(paths.himalayaConfig == FilePath("/tmp/xdg-config/olive-mail/config.toml"))
+}
+
+@Test func pathsNeedHome() {
+    #expect(throws: OliveMailError.missingHome) {
+        try Paths.resolve(environment: [:])
+    }
+}
+
+@Test func pathsResolveOnThisMachine() throws {
+    let paths = try Paths.resolve()
+    #expect(paths.directory.lastComponent?.string == "olive-mail")
+    #expect(paths.himalayaConfig == paths.directory.appending("config.toml"))
 }
