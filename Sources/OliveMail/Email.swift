@@ -9,13 +9,13 @@ struct Email: AsyncParsableCommand {
     struct Options: ParsableArguments {
         @OptionGroup var globals: Globals
 
-        @Option(name: .shortAndLong, help: "Mailbox.")
+        @Option(name: .shortAndLong, help: "Mailbox. Omitted: all mailboxes.")
         var mailbox: String?
     }
 
     struct List: AsyncParsableCommand {
         static let configuration = CommandConfiguration(
-            abstract: "List emails in a mailbox."
+            abstract: "List emails."
         )
 
         @OptionGroup var options: Options
@@ -32,6 +32,9 @@ struct Email: AsyncParsableCommand {
         @Option(help: "Match this text.")
         var contains: String?
 
+        @Option(help: "Maximum emails to list.")
+        var limit: Int = 20
+
         mutating func run() async throws {}
     }
 
@@ -46,7 +49,7 @@ struct Email: AsyncParsableCommand {
 
         @OptionGroup var options: Options
 
-        @Argument(help: "IMAP location id in that mailbox.")
+        @Argument(help: "Location id.")
         var id: String
 
         @Argument(help: "Only these fields (from, to, subject, date, body).")

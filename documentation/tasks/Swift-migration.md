@@ -55,9 +55,13 @@ Permission checks (not this task) sit between the command and `MailBackend`, key
 
 Hierarchy: account → mailbox → email. Noun-verb: `account`, `mailbox`, and `email` are dispatchers. Same shape as resource endpoints (`GET /accounts`, `GET /mailboxes`, `GET /mailboxes/MyInbox/emails/42`) if this grows a web or socket API later.
 
-Account and mailbox are **options**, not positionals, so they can be omitted and filled from config: `-a/--account` (default = `default = true` account), `-m/--mailbox` (default = that account’s inbox alias). `mailbox list` has `-a` only (it lists folders).
+Account and mailbox are **options**, not positionals. Omitted means **unrestricted** (all accounts, all mailboxes). Passing `-a` / `-m` narrows. `mailbox list` has `-a` only (it lists folders). Config `default = true` / inbox alias are not implicit CLI filters.
 
-IMAP id is a **location** in a mailbox. `42` in `MyInbox` and `42` in `MyProjectMailbox` are different emails. A move invalidates the old pair. `email show 42` means 42 in the default mailbox. (Stable ids — Message-ID or our integer — are a later task.)
+IMAP id is a **location** in a mailbox. `42` in `MyInbox` and `42` in `MyProjectMailbox` are different emails. A move invalidates the old pair. `email show` always shows **one** email. Unscoped `email show 42` is allowed only if that id is unique in the selected scope; if several match, fail and say what to pass (`-m`, and `-a` if needed). (Stable ids — Message-ID or our integer — are a later task.)
+
+`email list` is newest first, capped at `--limit` (default 20). List rows include account and mailbox so a following `email show` can be precise.
+
+Unscoped list/show is the API even before a local cache exists (v1 may hit live IMAP and be slow). [Caching.md](Caching.md) is a later **performance** optimization of the same commands, not a different interface.
 
 ```
 olive-mail account list
@@ -73,6 +77,7 @@ olive-mail email list -a hi@nohype.ai -m MyProjectMailbox
 olive-mail email list --from alice@client.com
 olive-mail email list -m MyInbox --from alice@client.com
 olive-mail email list --from alice@client.com --to bob@client.com --after 2026-01-01 --contains invoice
+olive-mail email list --limit 5
 
 olive-mail email show 42
 olive-mail email show -m MyInbox 42
@@ -86,9 +91,9 @@ Semantics:
 |---|---|
 | `account list` | configured accounts |
 | `account add` | writes credentials (not a Himalaya op) |
-| `mailbox list` | mailbox names |
-| `email list` | many emails (`id`, `from`, `to`, `date`, `subject`); optional `--from`, `--to`, `--after`, `--contains` |
-| `email show <id>` | that email (default mailbox unless `-m`) |
+| `mailbox list` | mailbox names (all accounts unless `-a`) |
+| `email list` | newest emails first, default `--limit 20`; columns include account, mailbox, `id`, `from`, `to`, `date`, `subject`; optional `--from`, `--to`, `--after`, `--contains` |
+| `email show <id>` | exactly one email; if the id is not unique in scope, error (name the missing `-m` / `-a`) |
 | `email show <id> from` | only that field (optional; same for `to`, `subject`, `date`, `body`) |
 
 `email show` means show the email. Partial read rights (later) redact denied parts of that same command; they do not invent a headers-only verb.
@@ -111,13 +116,15 @@ TTY: prompt email / IMAP / password. Non-TTY: email + `--imap`, password on stdi
 
 ```swift
 protocol MailBackend: Sendable {
-    func listMailboxes(account: Account) async throws -> [Mailbox]
-    func listEmails(account: Account, mailbox: Mailbox, filter: EmailFilter) async throws -> [EmailSummary]
-    func showEmail(account: Account, mailbox: Mailbox, id: EmailLocationID, fields: [EmailField]) async throws -> EmailView
+    func listMailboxes(account: Account?) async throws -> [Mailbox]
+    func listEmails(account: Account?, mailbox: Mailbox?, filter: EmailFilter) async throws -> [EmailSummary]
+    func showEmail(account: Account?, mailbox: Mailbox?, id: EmailLocationID, fields: [EmailField]) async throws -> EmailView
 }
 ```
 
 `HimalayaBackend` translates those into `himalaya -c <config> --json …` (inject `-c`; never expose `-c` on our CLI). Parse JSON into our types. Himalaya argv, JSON keys, and `--backend` stay inside this type.
+
+Unscoped `email list` (no `-a`/`-m`): for each mailbox, `himalaya envelope list -m <mailbox> --page-size <limit> --page 1`. Merge, sort newest first, cut to `--limit`. Himalaya has no cross-mailbox “N newest”; we assemble it. If that’s too slow, the client narrows (`-a`, `-m`, `--from`, …). We do not silently restrict scope. A later cache is the same merge, cheaper.
 
 Do not declare Himalaya flags on ArgumentParser commands. Do not forward leftover argv.
 
@@ -125,7 +132,7 @@ Do not declare Himalaya flags on ArgumentParser commands. Do not forward leftove
 
 - Granular permissions / matrix (separate TODO; this task only makes commands addressable)
 - Daemon-user privilege split ([Daemon-user.md](Daemon-user.md) starts after this)
-- Local Maildir cache ([Caching.md](Caching.md) — its “unchanged Himalaya argv” is superseded by this API; cache talks to `MailBackend`, agents still call `mailbox list` / `email list` / `email show`)
+- Local Maildir cache ([Caching.md](Caching.md) — later; same agent commands, faster). Its “unchanged Himalaya argv” is superseded.
 - Stable ids (Message-ID or per-account integers)
 - Send, draft, copy, move, flags, attachments download
 - Protocol CLIs (`imap`, `gmail`, `smtp`, …)
@@ -150,7 +157,7 @@ Himalaya remains a **runtime** dependency of `HimalayaBackend` (brew install on 
 ### 1. CLI skeleton (no IMAP)
 
 - [ ] Root `OliveMail` is a dispatcher: `account`, `mailbox`, `email`. Empty `olive-mail` / `--help` is our help, not Himalaya’s.
-- [ ] Leaves: `account list`, `account add`, `mailbox list`, `email list`, `email show`. `-a/--account` and `--json` on mail leaves; `-m/--mailbox` on `email` leaves. Both optional (defaults from config when implemented). `email list` filters: `--from`, `--to`, `--after`, `--contains`. Parse tests for the examples in this file (including rejection of `auth`, `email search`, and of `email show` without an id).
+- [ ] Leaves: `account list`, `account add`, `mailbox list`, `email list`, `email show`. `-a/--account` and `--json` on mail leaves; `-m/--mailbox` on `email` leaves. Omitted `-a`/`-m` = all, not a config default. `email list` filters: `--from`, `--to`, `--after`, `--contains`, `--limit` (default 20). Parse tests for the examples in this file (including rejection of `auth`, `email search`, and of `email show` without an id).
 - [ ] `email show`: `-m/--mailbox`, positional id, optional field names (`from`, `to`, `subject`, `date`, `body`). Unknown field = error.
 - [ ] Replace the hello-world test.
 
@@ -169,7 +176,7 @@ Himalaya remains a **runtime** dependency of `HimalayaBackend` (brew install on 
 - [ ] Map `mailbox list` → Himalaya mailbox list. Surface **IMAP mailbox ids** (e.g. `INBOX`, `MyProjectMailbox`), not Himalaya aliases only. Keep using `mailbox.alias.inbox` in config when the host’s inbox is not `INBOX`.
 - [ ] Map `email list` / `email show` onto Himalaya envelope/message calls **with** `-m/--mailbox` and Himalaya’s per-mailbox id. Our location id **is** that Himalaya/IMAP id for MVP.
 - [ ] `email show`: fetch and print that email. Optional field names just narrow the output. Permissions (later) redact; they do not change the command.
-- [ ] `email list` filters (`--from`, `--to`, `--after`, `--contains`): translate into Himalaya inside the backend. No search DSL on the CLI.
+- [ ] `email list`: per mailbox `envelope list -m … --page-size <limit> --page 1`; merge; sort newest first; cut to `--limit` (default 20). Filters `--from`, `--to`, `--after`, `--contains` translated inside the backend (Himalaya search DSL stays there). No search DSL on the CLI.
 
 ### 4. Retire bash
 
@@ -198,7 +205,7 @@ Himalaya remains a **runtime** dependency of `HimalayaBackend` (brew install on 
 
 - `olive-mail --help` lists `account`, `mailbox`, `email` and does not mention Himalaya subcommands or `auth`.
 - `olive-mail account add` writes the same config/pass layout as today.
-- `mailbox list`, `email list`, `email list -m MyInbox`, `email list --from …`, `email show 42` work against a real account via Himalaya.
+- `mailbox list`, `email list`, `email list -m MyInbox`, `email list --from …`, `email show 42` work against a real account via Himalaya. Unscoped `email list` returns at most 20, newest first.
 - `olive-mail envelope list` / `olive-mail message send` fail as **unknown commands**.
 - Binary on `PATH` is Swift; bash wrapper is gone.
 - Tests cover parsing and at least a fake `MailBackend` for `email list` / `email show` (no live IMAP required in CI).

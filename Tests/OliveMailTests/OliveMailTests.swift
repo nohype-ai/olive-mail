@@ -55,6 +55,7 @@ import ArgumentParser
     ["email", "list", "-m", "MyInbox", "--from", "alice@client.com"],
     ["email", "list", "-m", "MyProjectMailbox", "--after", "2026-01-01"],
     ["email", "list", "--from", "alice@client.com", "--to", "bob@client.com", "--after", "2026-01-01", "--contains", "invoice"],
+    ["email", "list", "--limit", "5"],
     ["email", "show", "42"],
     ["email", "show", "-m", "MyInbox", "42"],
     ["email", "show", "-m", "MyProjectMailbox", "108"],
