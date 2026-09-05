@@ -26,7 +26,7 @@ Theoretically, a malicious agent with a shell as the same Unix user can still re
 
 **Next.** Granular per-agent permission control: which folders, which senders, which dates; read vs draft; headers first, bodies only when asked. `olive-mail` could easily do that – it is the next work on this project, not a new architecture.
 
-Checklist: [TODO.md](TODO.md).
+Checklist: [TODO.md](documentation/TODO.md).
 
 ## Install
 
