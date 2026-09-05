@@ -24,7 +24,7 @@ import ArgumentParser
     for command in Account.configuration.subcommands {
         account.insert(command._commandName)
     }
-    #expect(account == ["list", "add"])
+    #expect(account == ["add"])
 
     var mailbox: Set<String> = []
     for command in Mailbox.configuration.subcommands {
@@ -40,23 +40,24 @@ import ArgumentParser
 }
 
 @Test(arguments: [
-    ["account", "list"],
-    ["account", "list", "--json"],
+    // MVP: no multi-account
+    // ["account", "list"],
+    // ["account", "list", "--json"],
     ["account", "add"],
     ["account", "add", "you@example.com", "--imap", "imaps://imap.example.com:993"],
     ["mailbox", "list"],
-    ["mailbox", "list", "-a", "hi@nohype.ai"],
+    // ["mailbox", "list", "-a", "hi@nohype.ai"],
     ["email", "list"],
     ["email", "list", "-m", "MyInbox"],
     ["email", "list", "-m", "MyProjectMailbox"],
-    ["email", "list", "-a", "hi@nohype.ai", "-m", "MyProjectMailbox"],
+    // ["email", "list", "-a", "hi@nohype.ai", "-m", "MyProjectMailbox"],
     ["email", "list", "--json", "-m", "MyInbox"],
-    ["email", "list", "--from", "alice@client.com"],
-    ["email", "list", "-m", "MyInbox", "--from", "alice@client.com"],
-    ["email", "list", "-m", "MyProjectMailbox", "--after", "2026-01-01"],
-    ["email", "list", "--from", "alice@client.com", "--to", "bob@client.com", "--after", "2026-01-01", "--contains", "invoice"],
+    // MVP: filters not implemented
+    // ["email", "list", "--from", "alice@client.com"],
+    // ["email", "list", "-m", "MyInbox", "--from", "alice@client.com"],
+    // ["email", "list", "-m", "MyProjectMailbox", "--after", "2026-01-01"],
+    // ["email", "list", "--from", "alice@client.com", "--to", "bob@client.com", "--after", "2026-01-01", "--contains", "invoice"],
     ["email", "list", "--limit", "5"],
-    ["email", "show", "42"],
     ["email", "show", "-m", "MyInbox", "42"],
     ["email", "show", "-m", "MyProjectMailbox", "108"],
     ["email", "show", "-m", "MyInbox", "42", "from"],
@@ -78,8 +79,10 @@ func commandExists(_ args: [String]) throws {
     ["email", "search"],
     ["show"],
     ["email", "show"],
+    ["email", "show", "42"],
     ["email", "show", "-m", "MyInbox"],
     ["email", "show", "-m", "MyInbox", "42", "bogus"],
+    ["account", "list"],
 ] as [[String]])
 func commandDoesNotExist(_ args: [String]) {
     #expect(throws: (any Error).self) {

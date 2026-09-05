@@ -1,8 +1,9 @@
 import ArgumentParser
 
 struct Globals: ParsableArguments {
-    @Option(name: .shortAndLong, help: "Account. Omitted: all accounts.")
-    var account: String?
+    // MVP: no multi-account
+    // @Option(name: .shortAndLong, help: "Account. Omitted: all accounts.")
+    // var account: String?
 
     @Flag(help: "JSON output.")
     var json = false

@@ -3,7 +3,10 @@ import ArgumentParser
 struct Account: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Accounts.",
-        subcommands: [List.self, Add.self]
+        subcommands: [
+            Add.self,
+            // List.self, // MVP: no multi-account
+        ]
     )
 
     struct Add: AsyncParsableCommand {

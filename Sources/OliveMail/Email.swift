@@ -20,17 +20,18 @@ struct Email: AsyncParsableCommand {
 
         @OptionGroup var options: Options
 
-        @Option(help: "From address.")
-        var from: String?
-
-        @Option(help: "To address.")
-        var to: String?
-
-        @Option(help: "Only emails after this date (YYYY-MM-DD).")
-        var after: String?
-
-        @Option(help: "Match this text.")
-        var contains: String?
+        // MVP: filters not implemented
+        // @Option(help: "From address.")
+        // var from: String?
+        //
+        // @Option(help: "To address.")
+        // var to: String?
+        //
+        // @Option(help: "Only emails after this date (YYYY-MM-DD).")
+        // var after: String?
+        //
+        // @Option(help: "Match this text.")
+        // var contains: String?
 
         @Option(help: "Maximum emails to list.")
         var limit: Int = 20
@@ -47,7 +48,10 @@ struct Email: AsyncParsableCommand {
             case from, to, subject, date, body
         }
 
-        @OptionGroup var options: Options
+        @OptionGroup var globals: Globals
+
+        @Option(name: .shortAndLong, help: "Mailbox.")
+        var mailbox: String
 
         @Argument(help: "Location id.")
         var id: String
