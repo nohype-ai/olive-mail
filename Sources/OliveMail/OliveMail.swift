@@ -4,6 +4,6 @@ import ArgumentParser
 struct OliveMail: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Real email context for agents.",
-        subcommands: [Auth.self, Mailbox.self, List.self, Search.self, Show.self]
+        subcommands: [Account.self, Mailbox.self, Email.self]
     )
 }
