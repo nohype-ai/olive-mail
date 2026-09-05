@@ -24,7 +24,7 @@ So: **our commands, our help, our ids-as-we-define-them.** Himalaya stays an imp
 
 - `olive-mail` is the Swift binary on `PATH` (`~/.local/bin`, same install story as bash).
 - First-class ArgumentParser commands. `--help` is ours.
-- Read-only MVP: `account list`, `account add`, `mailbox list`, `email list`, `email search`, `email show`.
+- Read-only MVP: `account list`, `account add`, `mailbox list`, `email list`, `email show`.
 - HimalayaBackend: exec Himalaya with **our** config, parse JSON, map to our types.
 - Send / SMTP / IMAP-raw / `message send` / `--send` are **absent** (not a reject-after-parse of Himalaya argv).
 - Same secret files as today: `~/.config/olive-mail/config.toml` + `<email>.pass` (`0600`).
@@ -42,7 +42,7 @@ Agent argv is Himalaya (`envelope list`, `message read 42`, …). `deny_send` is
 
 ```
 agent  →  olive-mail (Swift, ArgumentParser)
-              │  account list | account add | mailbox list | email list | email search | email show
+              │  account list | account add | mailbox list | email list | email show
               ▼
          MailBackend
               └─ HimalayaBackend (v1)  →  himalaya -c config --json …
@@ -70,11 +70,9 @@ olive-mail email list
 olive-mail email list -m MyInbox
 olive-mail email list -m MyProjectMailbox
 olive-mail email list -a hi@nohype.ai -m MyProjectMailbox
-
-olive-mail email search from alice@client.com
-olive-mail email search -m MyInbox from alice@client.com
-olive-mail email search -m MyProjectMailbox after 2026-01-01
-olive-mail email search -m MyProjectMailbox from alice@client.com after 2026-01-01
+olive-mail email list --from alice@client.com
+olive-mail email list -m MyInbox --from alice@client.com
+olive-mail email list --from alice@client.com --to bob@client.com --after 2026-01-01 --contains invoice
 
 olive-mail email show 42
 olive-mail email show -m MyInbox 42
@@ -89,13 +87,13 @@ Semantics:
 | `account list` | configured accounts |
 | `account add` | writes credentials (not a Himalaya op) |
 | `mailbox list` | mailbox names |
-| `email list` / `email search` | many emails (`id`, `from`, `to`, `date`, `subject`) |
+| `email list` | many emails (`id`, `from`, `to`, `date`, `subject`); optional `--from`, `--to`, `--after`, `--contains` |
 | `email show <id>` | that email (default mailbox unless `-m`) |
 | `email show <id> from` | only that field (optional; same for `to`, `subject`, `date`, `body`) |
 
 `email show` means show the email. Partial read rights (later) redact denied parts of that same command; they do not invent a headers-only verb.
 
-`search` is `list` plus query; do **not** expose Himalaya’s search DSL. MVP query: `from <addr>` and `after <YYYY-MM-DD>` as above (extend later).
+No `email search` command. Filters on `email list` are options (`--from`, `--to`, `--after`, `--contains`). Himalaya’s search DSL stays inside the backend.
 
 `--help` / `-h`: ArgumentParser. Root lists `account`, `mailbox`, `email`. There is no Himalaya help, no passthrough, no `@Argument(parsing: .captureForPassthrough)` for unknown verbs. No `auth` command.
 
@@ -114,8 +112,7 @@ TTY: prompt email / IMAP / password. Non-TTY: email + `--imap`, password on stdi
 ```swift
 protocol MailBackend: Sendable {
     func listMailboxes(account: Account) async throws -> [Mailbox]
-    func listEmails(account: Account, mailbox: Mailbox) async throws -> [EmailSummary]
-    func searchEmails(account: Account, mailbox: Mailbox, query: SearchQuery) async throws -> [EmailSummary]
+    func listEmails(account: Account, mailbox: Mailbox, filter: EmailFilter) async throws -> [EmailSummary]
     func showEmail(account: Account, mailbox: Mailbox, id: EmailLocationID, fields: [EmailField]) async throws -> EmailView
 }
 ```
@@ -153,7 +150,7 @@ Himalaya remains a **runtime** dependency of `HimalayaBackend` (brew install on 
 ### 1. CLI skeleton (no IMAP)
 
 - [ ] Root `OliveMail` is a dispatcher: `account`, `mailbox`, `email`. Empty `olive-mail` / `--help` is our help, not Himalaya’s.
-- [ ] Leaves: `account list`, `account add`, `mailbox list`, `email list`, `email search`, `email show`. `-a/--account` and `--json` on mail leaves; `-m/--mailbox` on `email` leaves. Both optional (defaults from config when implemented). Parse tests for the examples in this file (including rejection of `auth` and of `email show` without an id).
+- [ ] Leaves: `account list`, `account add`, `mailbox list`, `email list`, `email show`. `-a/--account` and `--json` on mail leaves; `-m/--mailbox` on `email` leaves. Both optional (defaults from config when implemented). `email list` filters: `--from`, `--to`, `--after`, `--contains`. Parse tests for the examples in this file (including rejection of `auth`, `email search`, and of `email show` without an id).
 - [ ] `email show`: `-m/--mailbox`, positional id, optional field names (`from`, `to`, `subject`, `date`, `body`). Unknown field = error.
 - [ ] Replace the hello-world test.
 
@@ -167,12 +164,12 @@ Himalaya remains a **runtime** dependency of `HimalayaBackend` (brew install on 
 
 ### 3. `MailBackend` + HimalayaBackend
 
-- [ ] Protocol + types (`Mailbox`, `EmailSummary`, `EmailLocationID`, `EmailField`, `SearchQuery`, `EmailView`).
+- [ ] Protocol + types (`Mailbox`, `EmailSummary`, `EmailLocationID`, `EmailField`, `EmailFilter`, `EmailView`).
 - [ ] `HimalayaBackend`: one process invoke helper (use swift-system; preserve stdout/stderr/exit). Always `-c` our config. `--json` for parseable output.
 - [ ] Map `mailbox list` → Himalaya mailbox list. Surface **IMAP mailbox ids** (e.g. `INBOX`, `MyProjectMailbox`), not Himalaya aliases only. Keep using `mailbox.alias.inbox` in config when the host’s inbox is not `INBOX`.
-- [ ] Map `email list` / `email show` / `email search` onto Himalaya envelope/message calls **with** `-m/--mailbox` and Himalaya’s per-mailbox id. Our location id **is** that Himalaya/IMAP id for MVP.
+- [ ] Map `email list` / `email show` onto Himalaya envelope/message calls **with** `-m/--mailbox` and Himalaya’s per-mailbox id. Our location id **is** that Himalaya/IMAP id for MVP.
 - [ ] `email show`: fetch and print that email. Optional field names just narrow the output. Permissions (later) redact; they do not change the command.
-- [ ] Search: translate `from` / `after` into whatever Himalaya search we call. If Himalaya’s DSL is the only option, keep that string **inside** the backend; the CLI stays `from` / `after`.
+- [ ] `email list` filters (`--from`, `--to`, `--after`, `--contains`): translate into Himalaya inside the backend. No search DSL on the CLI.
 
 ### 4. Retire bash
 
@@ -194,15 +191,14 @@ Himalaya remains a **runtime** dependency of `HimalayaBackend` (brew install on 
 2. Paths + `account add` + Himalaya/PATH bootstrap
 3. `mailbox list` live
 4. `email list` + `email show` live
-5. `email search`
-6. Delete bash product path
-7. README
+5. Delete bash product path
+6. README
 
 ## Done when
 
 - `olive-mail --help` lists `account`, `mailbox`, `email` and does not mention Himalaya subcommands or `auth`.
 - `olive-mail account add` writes the same config/pass layout as today.
-- `mailbox list`, `email list`, `email list -m MyInbox`, `email show 42`, and `email search` work against a real account via Himalaya.
+- `mailbox list`, `email list`, `email list -m MyInbox`, `email list --from …`, `email show 42` work against a real account via Himalaya.
 - `olive-mail envelope list` / `olive-mail message send` fail as **unknown commands**.
 - Binary on `PATH` is Swift; bash wrapper is gone.
 - Tests cover parsing and at least a fake `MailBackend` for `email list` / `email show` (no live IMAP required in CI).
@@ -218,7 +214,7 @@ Himalaya remains a **runtime** dependency of `HimalayaBackend` (brew install on 
 | `account add` overwrites `config.toml` | Leave as today; multiple-accounts TODO |
 | Help vs `email show … --help` | `--help` is ours everywhere; field name `help` is not a field |
 | Himalaya missing / old brew build | `ensure_himalaya`; fail with install text, do not silent-passthrough |
-| Body leaking via `email list` / `email search` | Summaries never include `body`; only `email show` does (then redaction, later) |
+| Body leaking via `email list` | Summaries never include `body`; only `email show` does (then redaction, later) |
 | [Caching.md](Caching.md) still says unchanged argv | Update that file’s command names when this lands, before cache work |
 
 ## Out of scope until this works

@@ -36,7 +36,7 @@ import ArgumentParser
     for command in Email.configuration.subcommands {
         email.insert(command._commandName)
     }
-    #expect(email == ["list", "search", "show"])
+    #expect(email == ["list", "show"])
 }
 
 @Test(arguments: [
@@ -51,10 +51,10 @@ import ArgumentParser
     ["email", "list", "-m", "MyProjectMailbox"],
     ["email", "list", "-a", "hi@nohype.ai", "-m", "MyProjectMailbox"],
     ["email", "list", "--json", "-m", "MyInbox"],
-    ["email", "search", "from", "alice@client.com"],
-    ["email", "search", "-m", "MyInbox", "from", "alice@client.com"],
-    ["email", "search", "-m", "MyProjectMailbox", "after", "2026-01-01"],
-    ["email", "search", "-m", "MyProjectMailbox", "from", "alice@client.com", "after", "2026-01-01"],
+    ["email", "list", "--from", "alice@client.com"],
+    ["email", "list", "-m", "MyInbox", "--from", "alice@client.com"],
+    ["email", "list", "-m", "MyProjectMailbox", "--after", "2026-01-01"],
+    ["email", "list", "--from", "alice@client.com", "--to", "bob@client.com", "--after", "2026-01-01", "--contains", "invoice"],
     ["email", "show", "42"],
     ["email", "show", "-m", "MyInbox", "42"],
     ["email", "show", "-m", "MyProjectMailbox", "108"],
@@ -74,6 +74,7 @@ func commandExists(_ args: [String]) throws {
     ["smtp"],
     ["list"],
     ["search"],
+    ["email", "search"],
     ["show"],
     ["email", "show"],
     ["email", "show", "-m", "MyInbox"],

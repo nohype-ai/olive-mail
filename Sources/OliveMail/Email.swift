@@ -3,7 +3,7 @@ import ArgumentParser
 struct Email: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Emails.",
-        subcommands: [List.self, Search.self, Show.self]
+        subcommands: [List.self, Show.self]
     )
 
     struct Options: ParsableArguments {
@@ -20,18 +20,17 @@ struct Email: AsyncParsableCommand {
 
         @OptionGroup var options: Options
 
-        mutating func run() async throws {}
-    }
+        @Option(help: "From address.")
+        var from: String?
 
-    struct Search: AsyncParsableCommand {
-        static let configuration = CommandConfiguration(
-            abstract: "Search emails in a mailbox."
-        )
+        @Option(help: "To address.")
+        var to: String?
 
-        @OptionGroup var options: Options
+        @Option(help: "Only emails after this date (YYYY-MM-DD).")
+        var after: String?
 
-        @Argument(help: "Query terms, e.g. from alice@client.com after 2026-01-01.")
-        var query: [String] = []
+        @Option(help: "Match this text.")
+        var contains: String?
 
         mutating func run() async throws {}
     }
