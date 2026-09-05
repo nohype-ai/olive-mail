@@ -5,6 +5,9 @@
 config.toml
 himalaya.toml
 
+# Swift Package
+.build
+
 # obsidian settings
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
