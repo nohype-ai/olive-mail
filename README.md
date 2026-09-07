@@ -55,50 +55,32 @@ Hints on how to work on Olive Mail are in [documentation/develop.md](documentati
 
 ## Install
 
-Linux and macOS. Install [Himalaya](https://github.com/pimalaya/himalaya) (`brew install himalaya`) and a Swift 6.4 toolchain, then from this checkout:
-
 ```sh
-swift build -c release
+brew install nohype-ai/tap/olive-mail
 ```
 
-The binary is `.build/release/olive-mail`. Put it on `PATH` if you want. From a checkout you can also `swift run olive-mail …`.
-
-If `himalaya` is missing, mail commands fail with install text.
+## Use
 
 Add an account:
 
 ```sh
-swift run olive-mail account add you@example.com --imap imaps://imap.example.com:993
+olive-mail account add you@example.com --imap imaps://imap.example.com:993
 ```
 
-TTY: prompts for missing email / IMAP / password. Non-TTY: email + `--imap`, password on stdin:
-
-```sh
-swift run olive-mail account add you@example.com --imap imaps://imap.example.com:993 <<EOF
-your-app-password
-EOF
-```
-
-Writes `~/.config/olive-mail/config.toml` and `~/.config/olive-mail/<email>.pass` (mode `0600`). Overwrites existing auth.
-
-## Use
+Read emails:
 
 ```sh
 olive-mail mailbox list
-
 olive-mail email list
 olive-mail email list -m MyInbox
-olive-mail email list --limit 5
-
 olive-mail email show -m MyInbox 42
-olive-mail email show -m MyInbox 42 from
 ```
 
-`--json` on the leaf (agents should pass it). `--help` is ours.
+Agents should pass it `--json`. Any one can pass it `--help`.
 
-`email list` is newest first, default 20. Ids are per-mailbox (IMAP UID); `email show` requires `-m`. If a host’s inbox is not `INBOX`, set `mailbox.alias.inbox` in `~/.config/olive-mail/config.toml` to an id from `olive-mail mailbox list`.
+`email list` is newest first, default 20. Ids are per-mailbox (IMAP UID); `email show` requires `-m` (mailbox). If a host’s inbox is not `INBOX`, set `mailbox.alias.inbox` in `~/.config/olive-mail/config.toml` to an id from `olive-mail mailbox list`.
 
-There is no send command (`message send`, `smtp`, `--send` are unknown).
+There is no send command yet.
 
 ## How it Works
 
