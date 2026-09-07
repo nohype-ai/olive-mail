@@ -41,6 +41,12 @@ This is early. It's a **working proof of concept that we already use** at Nohype
 
 The rough roadmap is laid out in: [TODO.md](documentation/TODO.md).
 
+## Contribute
+
+Contributors are welcome! Send us your feedback. Open and issue. Make a PR.
+
+Hints on how to work on Olive Mail are in [documentation/developing.md](documentation/developing.md).
+
 ## Install
 
 Linux and macOS. Install [Himalaya](https://github.com/pimalaya/himalaya) (`brew install himalaya`) and a Swift 6.4 toolchain, then from this checkout:
@@ -69,7 +75,7 @@ EOF
 
 Writes `~/.config/olive-mail/config.toml` and `~/.config/olive-mail/<email>.pass` (mode `0600`). Overwrites existing auth.
 
-## Usage
+## Use
 
 ```sh
 olive-mail mailbox list
