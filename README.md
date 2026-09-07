@@ -3,7 +3,7 @@
     <source media="(prefers-color-scheme: dark)" srcset="logo/logo_icon_titled.png">
     <img src="logo/logo_icon_titled_dark.png" alt="Olive Mail" width="200">
   </picture>
-<p><b>Email as Context for Agents</b><br>Controlled, Private & Token-Efficient</p>
+<p><b>Email as Context for Agents</b><br>Controlled, Private, Token-Efficient</p>
 </div>
 
 ---
