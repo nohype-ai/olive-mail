@@ -117,7 +117,6 @@ Folders: discover once with `olive-mail mailbox list`. IMAP default is `INBOX`; 
 
 - [ ] README **Now**: local Maildir via `olive-mail sync`; Himalaya reads offline. **Next** stays granular permissions.
 - [ ] Layout section: config dir + data dir above.
-- [ ] `config.toml.example`: `maildir.root` next to `imap.*`.
 - [ ] TODO.md: this task checked off when done.
 
 ## Order

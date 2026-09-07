@@ -98,7 +98,7 @@ Agents should pass `--json`. `--help` works on every command. There is no send c
 ~/.config/olive-mail/<email>.pass    # app password, mode 0600
 ```
 
-`config.toml.example` in this repo is the generic template. `account add` currently writes a **single** account (it overwrites `config.toml`).
+`account add` currently writes a **single** account (it overwrites `config.toml`).
 
 ## License
 
