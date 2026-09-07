@@ -22,7 +22,7 @@ brew install nohype-ai/tap/olive-mail
 # Human authenticates:
 olive-mail account add you@example.com --imap imaps://imap.example.com:993
 
-# Agents reads:
+# Agent reads:
 olive-mail mailbox list
 olive-mail email list -m Inbox
 olive-mail email show -m Inbox 42
