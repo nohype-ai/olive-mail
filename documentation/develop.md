@@ -1,4 +1,4 @@
-# Developing `olive-mail`
+# Develop `olive-mail`
 
 - How we go about making a CLI with Swift: https://github.com/nohype-ai/NohypeAIStack/blob/main/stack/apple/Swift%20CLI%20Development.md
 

@@ -51,7 +51,7 @@ The rough roadmap is laid out in: [TODO.md](documentation/TODO.md).
 
 Contributors are welcome! Send us your feedback. Open an issue. Make a PR.
 
-Hints on how to work on Olive Mail are in [documentation/developing.md](documentation/developing.md).
+Hints on how to work on Olive Mail are in [documentation/develop.md](documentation/develop.md).
 
 ## Install
 
