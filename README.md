@@ -1,7 +1,7 @@
 <div align="center">  
 <img src="logo/logo_icon_titled.png" alt="Olive Mail" width="300">
 <h3>Email as Context for Agents – Controlled, Private, Token-Efficient</h3>
-<p>Existing mail accounts hold crucial context for real work. Agents doing real work need that context. They don't need your password, unrestricted right to send, or sensitive email content.</p>
+<p>Existing mail accounts hold crucial context for real work. Agents need that context. They don't need your password, unrestricted right to send, or sensitive email content.</p>
 </div>
 
 ---
