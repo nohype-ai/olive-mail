@@ -22,7 +22,7 @@ Human authenticates:
 
 ```sh
 $ olive-mail account add you@example.com --imap imaps://imap.example.com:993
-Added account you@example.com. Agents won't touch that password.
+Added account you@example.com. Agents will not touch that password.
 ```
 
 Agent reads but can't send:
