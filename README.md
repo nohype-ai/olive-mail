@@ -34,9 +34,9 @@ Sent
 Drafts
 
 $ olive-mail email list -m Inbox
-Inbox	42	Alice Chen <alice@work.com>	you@example.com	2026-06-01T12:00:00Z	Re: Q3 close
-Inbox	41	Bob Lee <bob@work.com>	you@example.com	2026-05-28T09:14:00Z	Invoice 1842
-Inbox	40	Carol <carol@client.com>	you@example.com	2026-05-27T16:02:00Z	Next week's kickoff
+Inbox	42	Alice Chen  <alice@work.com>    you@example.com  2026-06-01T12:00:00Z  Re: Q3 close
+Inbox	41	Bob Lee     <bob@work.com>      you@example.com  2026-05-28T09:14:00Z  Invoice 1842
+Inbox	40	Carol       <carol@client.com>  you@example.com  2026-05-27T16:02:00Z  Next week's kickoff
 
 $ olive-mail email show -m Inbox 42
 From: Alice Chen <alice@work.com>
