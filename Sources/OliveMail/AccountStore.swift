@@ -26,10 +26,6 @@ enum AccountStore {
             to: URL(fileURLWithPath: paths.himalayaConfig.string),
             options: .atomic
         )
-
-        let err = FileHandle.standardError
-        err.write(Data("olive-mail account add: stored \(email) → \(passPath)\n".utf8))
-        err.write(Data("olive-mail account add: Himalaya config → \(paths.himalayaConfig)\n".utf8))
     }
 
     static func himalayaTOML(email: String, imap: String, passFile: FilePath) -> String {

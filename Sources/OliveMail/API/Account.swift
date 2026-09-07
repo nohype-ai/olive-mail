@@ -70,6 +70,7 @@ struct Account: AsyncParsableCommand {
                 imap: imap,
                 password: password
             )
+            print("Added account \(email). Agents won't touch that password.")
         }
     }
 

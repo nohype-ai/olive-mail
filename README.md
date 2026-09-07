@@ -1,14 +1,16 @@
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="logo/logo_icon_titled.png">
-    <img src="logo/logo_icon_titled_dark.png" alt="Olive Mail" width="200">
+    <img src="logo/logo_icon_titled_dark.png" alt="Olive Mail" width="100">
   </picture>
 <p><b>Email as Context for Agents</b><br>Controlled, Private, Token-Efficient</p>
+
+<p><b>Existing mail accounts hold crucial context for real work.</b> Agents doing real work need that context. They don't need your credentials, unnecessary send rights or sensitive email content.</p>
 </div>
 
 ---
 
-**Existing mail accounts hold crucial context for real work.** Agents doing real work need that context. They don't need your credentials, unnecessary send rights or sensitive email content.
+
 
 ## Install
 
@@ -18,16 +20,32 @@ brew install nohype-ai/tap/olive-mail
 
 ## Example
 
+Human authenticates:
+
 ```sh
-# Human authenticates:
-olive-mail account add you@example.com --imap imaps://imap.example.com:993
+$ olive-mail account add you@example.com --imap imaps://imap.example.com:993
+Added account you@example.com. Agents won't touch that password.
+```
 
-# Agent reads:
-olive-mail mailbox list
-olive-mail email list -m Inbox
-olive-mail email show -m Inbox 42
+Agent reads but can't send:
 
-# Agent can't send.
+```sh
+$ olive-mail mailbox list
+Inbox
+Sent
+Drafts
+
+$ olive-mail email list -m Inbox
+Inbox	42	Alice Chen <alice@work.com>	you@example.com	2026-06-01T12:00:00Z	Re: Q3 close
+Inbox	41	Bob Lee <bob@work.com>	you@example.com	2026-05-28T09:14:00Z	Invoice 1842
+Inbox	40	Carol <carol@client.com>	you@example.com	2026-05-27T16:02:00Z	Next week's kickoff
+
+$ olive-mail email show -m Inbox 42
+From: Alice Chen <alice@work.com>
+To: you@example.com
+Subject: Re: Q3 close
+Date: 2026-06-01T12:00:00Z
+The Q3 numbers are in. Can you review before Friday?
 ```
 
 ## Why
