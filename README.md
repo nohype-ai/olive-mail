@@ -61,26 +61,29 @@ brew install nohype-ai/tap/olive-mail
 
 ## Use
 
-Add an account:
+Humans authenticate their email accounts:
 
 ```sh
 olive-mail account add you@example.com --imap imaps://imap.example.com:993
 ```
 
-Read emails:
+Agents and scripts read emails:
 
 ```sh
 olive-mail mailbox list
+
 olive-mail email list
-olive-mail email list -m MyInbox
-olive-mail email show -m MyInbox 42
+olive-mail email list -m Inbox
+olive-mail email list -m Inbox --limit 5
+
+olive-mail email show -m Inbox 42
+olive-mail email show -m Inbox 42 from
+olive-mail email show -m Inbox 42 from subject body
 ```
 
-Agents should pass it `--json`. Any one can pass it `--help`.
+`email list` is newest first, default `--limit 20`. Ids are per-mailbox (IMAP UID), so `email show` always needs `-m`. Omit `-m` on `email list` to span all mailboxes. Show fields are `from`, `to`, `subject`, `date`, `body`.
 
-`email list` is newest first, default 20. Ids are per-mailbox (IMAP UID); `email show` requires `-m` (mailbox). If a host’s inbox is not `INBOX`, set `mailbox.alias.inbox` in `~/.config/olive-mail/config.toml` to an id from `olive-mail mailbox list`.
-
-There is no send command yet.
+Agents should pass `--json`. `--help` works on every command. There is no send command yet.
 
 ## How it Works
 

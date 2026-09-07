@@ -1,11 +1,9 @@
 # Written by olive-mail account add to ~/.config/olive-mail/config.toml.
 # No password in this file. passwd.command cats ~/.config/olive-mail/<email>.pass
-# If email list fails, set mailbox.alias.inbox to an id from: olive-mail mailbox list
 
 [accounts."you@example.com"]
 default = true
 email = "you@example.com"
-mailbox.alias.inbox = "INBOX"
 
 imap.server = "imaps://imap.example.com:993"
 imap.sasl.plain.username = "you@example.com"

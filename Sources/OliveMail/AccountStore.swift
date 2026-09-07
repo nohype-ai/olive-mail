@@ -39,7 +39,6 @@ enum AccountStore {
         [accounts.\(tomlQuote(email))]
         default = true
         email = \(tomlQuote(email))
-        mailbox.alias.inbox = "INBOX"
 
         imap.server = \(tomlQuote(imap))
         imap.sasl.plain.username = \(tomlQuote(email))

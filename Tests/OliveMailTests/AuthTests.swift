@@ -39,6 +39,7 @@ import SystemPackage
     #expect(config.contains(pass.string))
     #expect(!config.contains("smtp.server"))
     #expect(!config.contains("[smtp"))
+    #expect(!config.contains("mailbox.alias"))
 }
 
 @Test func requireConfiguredNeedsFiles() throws {
