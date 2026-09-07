@@ -50,9 +50,7 @@ The Q3 numbers are in. Can you review before Friday?
 
 ## Vision
 
-> This is what we're building.
-> 
-> The proof of concept you can run today is [Current State](#current-state).
+> This is what we're building. The proof of concept you can run today is [Current State](#current-state).
 
 **Olive Mail** is the grown-up solution: a local mediator that you authenticate. Agents never touch your email password. They search, read, draft or send only as far as you permitted.
 
