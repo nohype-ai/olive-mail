@@ -5,7 +5,7 @@
 - [ ] Daemon-user install: extra Unix user + daemon, fallback to today’s pass file ([tasks/Daemon-user.md](tasks/Daemon-user.md))
 - [ ] multiple accounts/addresses
 	- [ ] `account add` should add or update an account, not overwrite `config.toml`
-- [ ] Distribute as homebrew formula
+- [ ] Distribute as homebrew formula ([release/](../release/))
 - [ ] Include agent skill
 - [ ] Granular permissions on this CLI: folders, senders, dates; read vs draft vs send; metadata first, body only when asked
 - [ ] Local incremental cache behind `olive-mail` ([tasks/Caching.md](tasks/Caching.md))
