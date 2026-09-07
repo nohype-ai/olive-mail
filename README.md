@@ -8,34 +8,40 @@
 
 ---
 
-**Existing mail accounts hold crucial and sensitive context for real work.** But giving agents that context comes with challenges.
+**Existing mail accounts hold crucial and sensitive context for real work.**
+
+But giving agents that context comes with problems.
 
 ## Problems
 
-1. Typical agents either see none of the real email context or can do all with it – locked into their own little mailbox or holding the keys to your whole kingdom.
-2. Real emails often hold sensitive data that business would need to filter or redact before letting agents read emails at all.
-3. Agents accessing mail accounts directly is slow, often loads redundant data, offers no meaningful search, and costs a lot of tokens.
+1. Typical agents either see no real email context or can do all with it – locked into their own little mailbox or holding the keys to your kingdom.
+2. Real emails often contain sensitive data that a business needs to filter or redact before letting agents read emails at all.
+3. Agents accessing mail accounts directly is slow, loads redundant data, offers no meaningful search, and costs a lot of tokens.
 
 ## Vision
+
+> This is what we're building.
+> 
+> The proof of concept you can run today is [Current State](#current-state).
 
 **Olive Mail** is the grown-up solution: a local mediator that you authenticate. Agents never touch your email password. They search, read, draft or send only as far as you permitted.
 
 So agents don't _have_ to act as spokesperson for you or your company. You can employ them like interns. They can be in the loop on all things for all their work, while you're still the one who speaks.
 
-On top of isolating credentials from agents (actual unix account separation), granular permission control, and redaction plugins for sensitive data, Olive Mail will be able to leverage a local cache across agents for super fast responses, semantic search and minimal token cost.
+On top of isolating credentials from agents (actual unix account separation), granular permission control, and redaction plugins for sensitive data, Olive Mail leverages a local cache across agents for super fast responses, semantic search and minimal token cost.
 
 ## Current State
 
-This is early. It's a **working proof of concept that we already use** at Nohype AI for remote bots and coding agents. But it is not the full vision yet by far.
+Olive Mail is now a **working proof of concept that we already use** at Nohype AI for remote bots and coding agents. But it is not the full vision yet by far.
 
 **What Works Now:**
 
 - Human user can authenticate one email account using `account add`
 - Agents can list and read emails, using `mailbox list`, `email list`, and `email show`
 - Agents practically do not touch credentials and do not talk directly to mail accounts.
-  - ⚠️ Malicious agents could theoretically still read the credentials.
+  - Malicious agents could theoretically still read the credentials.
 - Agents practically do not send emails.
-  - ⚠️ Malicious agents could theoretically still add an SMTP server, read the credentials and then use both to bypass Olive Mail and send.
+  - Malicious agents could theoretically still add an SMTP server, read the credentials and then use both to bypass Olive Mail and send.
 
 **What's Next:**
 
@@ -43,7 +49,7 @@ The rough roadmap is laid out in: [TODO.md](documentation/TODO.md).
 
 ## Contribute
 
-Contributors are welcome! Send us your feedback. Open and issue. Make a PR.
+Contributors are welcome! Send us your feedback. Open an issue. Make a PR.
 
 Hints on how to work on Olive Mail are in [documentation/developing.md](documentation/developing.md).
 
