@@ -8,11 +8,29 @@
 
 ---
 
-**Existing mail accounts hold crucial and sensitive context for real work.**
+**Existing mail accounts hold crucial context for real work.** Agents doing real work need that context. They don't need your credentials, unnecessary send rights or sensitive email content.
 
-But giving agents that context comes with problems.
+## Install
 
-## Problems
+```sh
+brew install nohype-ai/tap/olive-mail
+```
+
+## Example
+
+```sh
+# Human authenticates:
+olive-mail account add you@example.com --imap imaps://imap.example.com:993
+
+# Agents reads:
+olive-mail mailbox list
+olive-mail email list -m Inbox
+olive-mail email show -m Inbox 42
+
+# Agent can't send.
+```
+
+## Why
 
 1. Typical agents either see no real email context or can do all with it – locked into their own little mailbox or holding the keys to your kingdom.
 2. Real emails often contain sensitive data that a business needs to filter or redact before letting agents read emails at all.
@@ -52,12 +70,6 @@ The rough roadmap is laid out in: [TODO.md](documentation/TODO.md).
 Contributors are welcome! Send us your feedback. Open an issue. Make a PR.
 
 Hints on how to work on Olive Mail are in [documentation/develop.md](documentation/develop.md).
-
-## Install
-
-```sh
-brew install nohype-ai/tap/olive-mail
-```
 
 ## Use
 
