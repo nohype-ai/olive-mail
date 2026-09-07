@@ -8,7 +8,7 @@ Status: todo
 Date: 2026-09-01  
 Depends on: live IMAP already working via `olive-mail account add` + `olive-mail email list`
 
-This is a product feature of this CLI, not a one-off on the Grok Bot VM. The first dogfood mailbox is `hi@nohype.ai` (IONOS) on that VM — see the company `BOT/Email Setup.md` — but nothing in this repo is mailbox-specific. The repo is already decoupled from any real account.
+This is a product feature of this CLI. Nothing in this repo is mailbox-specific.
 
 ## Goal
 
@@ -50,7 +50,7 @@ Timer every 10 min: `olive-mail sync`. The wrapper may also sync on a read if `.
 - Enabling send (`MAIL_SEND` stays off; humans send from the real client)
 - Granular permissions (separate TODO; cache does not replace that)
 - Privilege split (Maildir is as readable as today’s `.pass` file to the same Unix user)
-- Hardcoding `hi@`, IONOS, or `~/mail/hi/`
+- Hardcoding a real mailbox, host, or `~/mail/…` path
 - A SKILL.md or a parallel `~/mail-cache/` tree — the CLI is the interface
 - Replacing Himalaya; exposing Neverest/pimdir (mbsync is the v1 sync)
 
@@ -119,7 +119,6 @@ Folders: discover once with `olive-mail mailbox list`. IMAP default is `INBOX`; 
 - [ ] Layout section: config dir + data dir above.
 - [ ] `config.toml.example`: `maildir.root` next to `imap.*`.
 - [ ] TODO.md: this task checked off when done.
-- [ ] Company follow-up (not this repo): `BOT/Email Setup.md` — bots still only run `olive-mail`; IMAP is no longer on the read path.
 
 ## Order
 
