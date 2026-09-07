@@ -51,6 +51,9 @@ LATEST=$(git -C "$REPO_DIR" tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[
 if [[ -z "$LATEST" ]]; then
     VERSION="v0.1.0"
     echo "No existing version tags. First release: $VERSION"
+elif [[ ! -f "$FORMULA" ]] || ! grep -q "bottle do" "$FORMULA" || ! grep -q "tags/${LATEST}.tar.gz" "$FORMULA"; then
+    VERSION="$LATEST"
+    echo "Resuming unfinished $VERSION"
 else
     MAJOR=$(echo "$LATEST" | sed 's/^v//' | cut -d. -f1)
     MINOR=$(echo "$LATEST" | sed 's/^v//' | cut -d. -f2)
@@ -88,9 +91,13 @@ echo ""
 # Step 1: Tag the release in the olive-mail repo and push
 echo "Step 1: Tagging $VERSION and pushing to GitHub ..."
 cd "$REPO_DIR"
-git tag "$VERSION"
-git push origin "$VERSION"
-echo "  Tag $VERSION pushed."
+if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+    echo "  Tag $VERSION already exists, skipping."
+else
+    git tag "$VERSION"
+    git push origin "$VERSION"
+    echo "  Tag $VERSION pushed."
+fi
 echo ""
 
 # Step 2: Wait for GitHub to create the source tarball, then compute sha256
@@ -136,10 +143,9 @@ mkdir -p "$BREW_TAP/Formula"
 cp "$FORMULA" "$BREW_TAP/Formula/olive-mail.rb"
 
 if brew list --formula olive-mail >/dev/null 2>&1; then
-    brew reinstall --build-from-source nohype-ai/tap/olive-mail
-else
-    brew install --build-from-source nohype-ai/tap/olive-mail
+    brew uninstall --ignore-dependencies olive-mail
 fi
+brew install --build-bottle nohype-ai/tap/olive-mail
 
 BOTTLE_DIR="$(mktemp -d)"
 pushd "$BOTTLE_DIR" >/dev/null
@@ -182,6 +188,12 @@ echo "=== Release $VERSION complete! ==="
 # Step 7: Install from the bottle
 echo ""
 echo "Step 7: Installing bottled olive-mail locally ..."
-cd "$BREW_TAP" && git pull
-brew reinstall nohype-ai/tap/olive-mail
+git -C "$BREW_TAP" fetch origin
+git -C "$BREW_TAP" reset --hard origin/main
+git -C "$BREW_TAP" clean -fd
+# Drop the --build-bottle keg; a normal install should fetch the bottle.
+if brew list --formula olive-mail >/dev/null 2>&1; then
+    brew uninstall --ignore-dependencies olive-mail
+fi
+brew install nohype-ai/tap/olive-mail
 echo "This version of olive-mail is now installed: $(brew list --versions olive-mail)"

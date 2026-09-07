@@ -21,7 +21,7 @@ Release a new major version:
 ./release.sh major
 ```
 
-No tags yet → first release is `v0.1.0` (any of the three bumps).
+No tags yet → first release is `v0.1.0` (any of the three bumps). Re-run the same command if a release stops mid-bottle: it resumes that version instead of bumping.
 
 ## Release Manually
 
