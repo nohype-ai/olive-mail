@@ -5,7 +5,7 @@
   </picture>
 <p><b>Email as Context for Agents</b><br>Controlled, Private, Token-Efficient</p>
 
-<p><b>Existing mail accounts hold crucial context for real work.</b><br>Agents doing real work need that context. They don't need your credentials, unnecessary send rights or sensitive email content.</p>
+<p>Existing mail accounts hold crucial context for real work. Agents doing real work need that context. They don't need your credentials, unnecessary send rights or sensitive email content.</p>
 </div>
 
 ---
