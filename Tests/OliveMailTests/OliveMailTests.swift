@@ -57,10 +57,10 @@ import SystemPackage
     ["email", "list", "--limit", "5"],
     ["email", "show", "-m", "MyInbox", "42"],
     ["email", "show", "-m", "MyProjectMailbox", "108"],
-    ["email", "show", "-m", "MyInbox", "42", "from"],
-    ["email", "show", "-m", "MyInbox", "42", "from", "to", "subject"],
-    ["email", "show", "-m", "MyProjectMailbox", "108", "body"],
-    ["email", "show", "-m", "MyProjectMailbox", "108", "from", "date", "body"],
+    ["email", "show", "-m", "MyInbox", "42", "--fields", "from"],
+    ["email", "show", "-m", "MyInbox", "42", "--fields", "from,to,subject"],
+    ["email", "show", "-m", "MyProjectMailbox", "108", "--fields", "body"],
+    ["email", "show", "-m", "MyProjectMailbox", "108", "--fields", "from,date,body"],
 ] as [[String]])
 func commandExists(_ args: [String]) throws {
     _ = try OliveMail.parseAsRoot(args)
@@ -78,7 +78,9 @@ func commandExists(_ args: [String]) throws {
     ["email", "show"],
     ["email", "show", "42"],
     ["email", "show", "-m", "MyInbox"],
-    ["email", "show", "-m", "MyInbox", "42", "bogus"],
+    ["email", "show", "-m", "MyInbox", "42", "from"],
+    ["email", "show", "-m", "MyInbox", "42", "--fields", "bogus"],
+    ["email", "show", "-m", "MyInbox", "42", "--fields", "from,bogus"],
     ["account", "list"],
 ] as [[String]])
 func commandDoesNotExist(_ args: [String]) {

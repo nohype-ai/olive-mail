@@ -77,11 +77,11 @@ olive-mail email list -m Inbox
 olive-mail email list -m Inbox --limit 5
 
 olive-mail email show -m Inbox 42
-olive-mail email show -m Inbox 42 from
-olive-mail email show -m Inbox 42 from subject body
+olive-mail email show -m Inbox 42 --fields from
+olive-mail email show -m Inbox 42 --fields from,subject,body
 ```
 
-`email list` is newest first, default `--limit 20`. Ids are per-mailbox (IMAP UID), so `email show` always needs `-m`. Omit `-m` on `email list` to span all mailboxes. Show fields are `from`, `to`, `subject`, `date`, `body`.
+`email list` is newest first, default `--limit 20`. Ids are per-mailbox (IMAP UID), so `email show` always needs `-m`. Omit `-m` on `email list` to span all mailboxes. `--fields` is a comma-separated subset of `from`, `to`, `subject`, `date`, `body`.
 
 Agents should pass `--json`. `--help` works on every command. There is no send command yet.
 

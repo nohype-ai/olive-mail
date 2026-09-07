@@ -88,8 +88,25 @@ struct Email: AsyncParsableCommand {
             abstract: "Show one email."
         )
 
-        enum Field: String, ExpressibleByArgument, CaseIterable {
+        enum Field: String, CaseIterable {
             case from, to, subject, date, body
+        }
+
+        struct FieldList: ExpressibleByArgument {
+            var fields: [Field]
+
+            init?(argument: String) {
+                let parts = argument.split(separator: ",", omittingEmptySubsequences: true)
+                    .map { $0.trimmingCharacters(in: .whitespaces) }
+                guard !parts.isEmpty else { return nil }
+                var parsed: [Field] = []
+                parsed.reserveCapacity(parts.count)
+                for part in parts {
+                    guard let field = Field(rawValue: part) else { return nil }
+                    parsed.append(field)
+                }
+                fields = parsed
+            }
         }
 
         @OptionGroup var globals: Globals
@@ -100,15 +117,15 @@ struct Email: AsyncParsableCommand {
         @Argument(help: "Location id.")
         var id: String
 
-        @Argument(help: "Only these fields (from, to, subject, date, body).")
-        var fields: [Field] = []
+        @Option(help: "Only these fields, comma-separated (from,to,subject,date,body).")
+        var fields: FieldList?
 
         mutating func run() async throws {
             let paths = try FilePaths.resolve()
             try paths.requireConfigured()
             let backend = HimalayaBackend(paths: paths)
             let view = try await backend.showEmail(mailbox: mailbox, id: id)
-            let wanted = fields.isEmpty ? Field.allCases : fields
+            let wanted = fields?.fields ?? Field.allCases
             if globals.json {
                 try printJSON(jsonObject(view, fields: wanted))
             } else {
