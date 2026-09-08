@@ -23,7 +23,7 @@ struct Account: AsyncParsableCommand {
         @Argument(help: "Email address.")
         var email: String?
 
-        @Option(help: "IMAP server URL (e.g. imaps://imap.example.com:993).")
+        @Option(help: "IMAP server: host[:port] or imaps://host[:port]. Port defaults to 993.")
         var imap: String?
 
         mutating func run() async throws {
@@ -41,11 +41,12 @@ struct Account: AsyncParsableCommand {
             var imap = self.imap ?? ""
             if imap.isEmpty {
                 if tty {
-                    imap = prompt("IMAP server (e.g. imaps://imap.example.com:993): ")
+                    imap = prompt("IMAP server (host[:port] or imaps://host[:port], port 993): ")
                 } else {
                     throw OliveMailError.missingImap
                 }
             }
+            imap = AccountStore.normalizeImap(imap)
             if imap.isEmpty { throw OliveMailError.emptyImap }
 
             let paths = try FilePaths.resolve()

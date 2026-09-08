@@ -42,6 +42,8 @@ import SystemPackage
     // ["account", "list", "--json"],
     ["account", "add"],
     ["account", "add", "you@example.com", "--imap", "imaps://imap.example.com:993"],
+    ["account", "add", "you@example.com", "--imap", "imap.example.com:993"],
+    ["account", "add", "you@example.com", "--imap", "imap.example.com"],
     ["mailbox", "list"],
     // ["mailbox", "list", "-a", "hi@nohype.ai"],
     ["email", "list"],

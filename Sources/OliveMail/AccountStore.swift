@@ -6,6 +6,39 @@ import SystemPackage
 #endif
 
 enum AccountStore {
+    /// Accepts `imaps://host[:port]`, `imap://host[:port]`, or a bare `host[:port]`.
+    /// Himalaya treats a bare authority as `imaps://`. Missing port is 993
+    /// (`imaps` / bare) or 143 (`imap`).
+    static func normalizeImap(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let scheme: String?
+        let rest: String
+        if let sep = trimmed.range(of: "://") {
+            scheme = String(trimmed[trimmed.startIndex..<sep.lowerBound]).lowercased()
+            rest = String(trimmed[sep.upperBound...])
+        } else {
+            scheme = nil
+            rest = trimmed
+        }
+        if scheme == "unix" { return "unix://" + rest }
+        let port = (scheme == "imap") ? 143 : 993
+        let authority = withDefaultPort(rest, port)
+        if let scheme { return scheme + "://" + authority }
+        return authority
+    }
+
+    private static func withDefaultPort(_ authority: String, _ port: Int) -> String {
+        if authority.hasPrefix("[") {
+            guard let close = authority.firstIndex(of: "]") else { return authority }
+            let after = authority[authority.index(after: close)...]
+            if after.hasPrefix(":") { return authority }
+            return authority + ":\(port)"
+        }
+        if authority.contains(":") { return authority }
+        if authority.isEmpty { return authority }
+        return authority + ":\(port)"
+    }
+
     static func write(paths: FilePaths, email: String, imap: String, password: String) throws {
         let fm = FileManager.default
         try fm.createDirectory(
@@ -21,7 +54,11 @@ enum AccountStore {
             ofItemAtPath: passPath.string
         )
 
-        let config = himalayaTOML(email: email, imap: imap, passFile: passPath)
+        let config = himalayaTOML(
+            email: email,
+            imap: normalizeImap(imap),
+            passFile: passPath
+        )
         try Data(config.utf8).write(
             to: URL(fileURLWithPath: paths.himalayaConfig.string),
             options: .atomic

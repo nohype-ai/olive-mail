@@ -5,7 +5,6 @@
 - [ ] Daemon-user install: extra Unix user + daemon, fallback to today’s pass file ([tasks/Daemon-user.md](tasks/Daemon-user.md))
 - [ ] multiple accounts/addresses
 	- [ ] `account add` should add or update an account, not overwrite `config.toml`
-- [ ] Distribute as homebrew formula ([release/](../release/))
 - [ ] Include agent skill
 - [ ] Granular permissions on this CLI: folders, senders, dates; read vs draft vs send; metadata first, body only when asked
 - [ ] Local incremental cache behind `olive-mail` ([tasks/Caching.md](tasks/Caching.md))
@@ -17,6 +16,7 @@
 
 ## Done
 
+- [x] Distribute as homebrew formula ([release/](../release/))
 - [x] Compiled olive-mail (Swift): own read API, Himalaya as backend ([tasks/done/Swift-migration.md](tasks/done/Swift-migration.md))
 - [x] Decouple the repo from any real mailbox
 - [x] Grok-bot PATH (user-bin symlink, not the repo directory)

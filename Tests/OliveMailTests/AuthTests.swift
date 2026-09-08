@@ -34,12 +34,48 @@ import SystemPackage
     )
     #expect(!config.contains("s3cret"))
     #expect(config.contains("[accounts.\"you@example.com\"]"))
-    #expect(config.contains("imaps://imap.example.com:993"))
+    #expect(config.contains("imap.server = \"imaps://imap.example.com:993\""))
     #expect(config.contains("/bin/cat"))
     #expect(config.contains(pass.string))
     #expect(!config.contains("smtp.server"))
     #expect(!config.contains("[smtp"))
     #expect(!config.contains("mailbox.alias"))
+}
+
+@Test func accountAddAcceptsImapWithoutScheme() throws {
+    let tmp = FileManager.default.temporaryDirectory
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: tmp) }
+
+    let paths = FilePaths(directory: FilePath(tmp.path))
+    try AccountStore.write(
+        paths: paths,
+        email: "you@example.com",
+        imap: "imap.example.com",
+        password: "s3cret"
+    )
+
+    let config = try String(
+        contentsOf: URL(fileURLWithPath: paths.himalayaConfig.string),
+        encoding: .utf8
+    )
+    #expect(config.contains("imap.server = \"imap.example.com:993\""))
+    #expect(!config.contains("imaps://"))
+}
+
+@Test(arguments: [
+    ("imaps://imap.example.com:993", "imaps://imap.example.com:993"),
+    ("imaps://imap.example.com", "imaps://imap.example.com:993"),
+    ("imap.example.com:993", "imap.example.com:993"),
+    ("imap.example.com", "imap.example.com:993"),
+    ("IMAP.example.com:993", "IMAP.example.com:993"),
+    ("IMAPS://imap.example.com:993", "imaps://imap.example.com:993"),
+    ("  imap.example.com  ", "imap.example.com:993"),
+    ("imap://imap.example.com", "imap://imap.example.com:143"),
+] as [(String, String)])
+func normalizeImap(_ raw: String, _ expected: String) {
+    #expect(AccountStore.normalizeImap(raw) == expected)
 }
 
 @Test func requireConfiguredNeedsFiles() throws {
